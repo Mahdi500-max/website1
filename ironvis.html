@@ -1,0 +1,2639 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IRONVIS — From Engineering to Understanding | 3D Industrial & Robotics Visualization</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Three.js r128 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            linen: '#EEEAE2',
+            forest: {
+              DEFAULT: '#183A32',
+              deep: '#0B1D18',
+              mid: '#122B24',
+              card: '#142F28'
+            },
+            moss: '#7D8066',
+            brass: {
+              DEFAULT: '#B08A56',
+              light: '#CBA570',
+              dark: '#8C6B3D'
+            },
+            walnut: '#343A37',
+            graphite: '#151B18'
+          },
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    :root {
+      --linen: #EEEAE2;
+      --forest: #183A32;
+      --forest-deep: #091814;
+      --moss: #7D8066;
+      --brass: #B08A56;
+      --walnut: #343A37;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+      background-color: #0B1D18;
+      color: #EEEAE2;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      overflow-x: hidden;
+      margin: 0;
+    }
+
+    /* Hide native cursor on desktop devices where liquid jelly cursor is active */
+    @media (pointer: fine) {
+      body, a, button, input, select, textarea, [role="button"] {
+        cursor: none !important;
+      }
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #091713;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #274D43;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #B08A56;
+    }
+
+    /* Classic Frosted Glass Navigation Bar */
+    .ios-glass-nav {
+      background: rgba(255, 255, 255, 0.045);
+      backdrop-filter: blur(18px) saturate(160%);
+      -webkit-backdrop-filter: blur(18px) saturate(160%);
+      border: 1px solid rgba(238, 234, 226, 0.14);
+      box-shadow:
+        0 10px 32px -6px rgba(0, 0, 0, 0.48),
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.18);
+    }
+
+    .ios-glass-subpill {
+      background: rgba(11, 29, 24, 0.65);
+      backdrop-filter: blur(14px) saturate(160%);
+      -webkit-backdrop-filter: blur(14px) saturate(160%);
+      border: 1px solid rgba(238, 234, 226, 0.16);
+      box-shadow:
+        0 12px 30px -8px rgba(0, 0, 0, 0.55),
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.14);
+    }
+
+    .ios-glass-card {
+      background: linear-gradient(
+        145deg,
+        rgba(28, 64, 55, 0.42) 0%,
+        rgba(14, 34, 29, 0.58) 100%
+      );
+      backdrop-filter: blur(20px) saturate(170%);
+      -webkit-backdrop-filter: blur(20px) saturate(170%);
+      border: 1px solid rgba(238, 234, 226, 0.12);
+      box-shadow:
+        0 20px 50px -15px rgba(0, 0, 0, 0.6),
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.14);
+    }
+
+    .ios-glass-pill {
+      background: linear-gradient(
+        135deg,
+        rgba(238, 234, 226, 0.12) 0%,
+        rgba(24, 58, 50, 0.48) 100%
+      );
+      backdrop-filter: blur(18px) saturate(180%);
+      -webkit-backdrop-filter: blur(18px) saturate(180%);
+      border: 1px solid rgba(238, 234, 226, 0.22);
+      box-shadow:
+        0 12px 32px -6px rgba(0, 0, 0, 0.45),
+        inset 0 1px 1px rgba(255, 255, 255, 0.25);
+      transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .ios-glass-pill:hover {
+      background: linear-gradient(
+        135deg,
+        rgba(176, 138, 86, 0.26) 0%,
+        rgba(28, 68, 58, 0.65) 100%
+      );
+      border-color: rgba(176, 138, 86, 0.55);
+      transform: translateY(-2px);
+      box-shadow:
+        0 16px 40px -8px rgba(0, 0, 0, 0.6),
+        0 0 25px -5px rgba(176, 138, 86, 0.3),
+        inset 0 1px 1px rgba(255, 255, 255, 0.35);
+    }
+
+    /* Studio Radial Background */
+    .studio-backdrop {
+      background:
+        radial-gradient(circle at 52% 54%, rgba(33, 78, 66, 0.72) 0%, rgba(19, 47, 40, 0.88) 45%, rgba(9, 23, 19, 0.98) 85%, #07120F 100%);
+    }
+
+    /* Blinking Red Dot Animation inside "Book an Audit" Button */
+    @keyframes redDotBlink {
+      0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+        box-shadow: 0 0 10px 2px rgba(255, 59, 48, 0.85);
+      }
+      50% {
+        opacity: 0.25;
+        transform: scale(0.82);
+        box-shadow: 0 0 3px 0px rgba(255, 59, 48, 0.3);
+      }
+    }
+
+    @keyframes redRingPulse {
+      0% {
+        transform: scale(0.9);
+        opacity: 0.85;
+      }
+      75%, 100% {
+        transform: scale(2.35);
+        opacity: 0;
+      }
+    }
+
+    .blink-red-dot {
+      animation: redDotBlink 1.35s infinite ease-in-out;
+    }
+
+    .pulse-red-ring {
+      animation: redRingPulse 1.35s infinite cubic-bezier(0.215, 0.61, 0.355, 1);
+    }
+
+    /* Transparent Glass Jiggly Cursor Layer */
+    #jelly-cursor-layer {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 9999;
+      overflow: hidden;
+    }
+
+    .glass-jelly-orb {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 44px;
+      height: 44px;
+      margin-left: -22px;
+      margin-top: -22px;
+      border-radius: 50%;
+      background: radial-gradient(
+        circle at 30% 28%,
+        rgba(255, 255, 255, 0.38) 0%,
+        rgba(238, 234, 226, 0.12) 28%,
+        rgba(24, 58, 50, 0.06) 68%,
+        rgba(176, 138, 86, 0.24) 100%
+      );
+      backdrop-filter: blur(8px) saturate(185%) brightness(1.16) contrast(1.06);
+      -webkit-backdrop-filter: blur(8px) saturate(185%) brightness(1.16) contrast(1.06);
+      border: 1.2px solid rgba(255, 255, 255, 0.48);
+      box-shadow:
+        0 10px 28px -4px rgba(0, 0, 0, 0.42),
+        inset 0 2px 4px rgba(255, 255, 255, 0.72),
+        inset 0 -3px 6px rgba(176, 138, 86, 0.35),
+        inset 2px 0 5px rgba(255, 255, 255, 0.25);
+      will-change: transform, border-radius;
+      pointer-events: none;
+    }
+
+    .glass-jelly-orb::before {
+      content: '';
+      position: absolute;
+      top: 6px;
+      left: 8px;
+      width: 13px;
+      height: 7px;
+      border-radius: 50%;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0) 100%);
+      transform: rotate(-28deg);
+      pointer-events: none;
+    }
+
+    .glass-jelly-orb::after {
+      content: '';
+      position: absolute;
+      bottom: 5px;
+      right: 6px;
+      width: 14px;
+      height: 8px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(238, 234, 226, 0.45) 0%, rgba(176, 138, 86, 0) 80%);
+      transform: rotate(-25deg);
+      pointer-events: none;
+    }
+
+    .glass-jelly-droplet {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 22px;
+      height: 22px;
+      margin-left: -11px;
+      margin-top: -11px;
+      border-radius: 50%;
+      background: radial-gradient(
+        circle at 32% 32%,
+        rgba(255, 255, 255, 0.32) 0%,
+        rgba(238, 234, 226, 0.06) 65%,
+        rgba(176, 138, 86, 0.18) 100%
+      );
+      backdrop-filter: blur(5px) brightness(1.12);
+      -webkit-backdrop-filter: blur(5px) brightness(1.12);
+      border: 1px solid rgba(255, 255, 255, 0.32);
+      box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.55);
+      will-change: transform;
+      pointer-events: none;
+    }
+
+    .jelly-core-dot {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 5px;
+      height: 5px;
+      margin-left: -2.5px;
+      margin-top: -2.5px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.92);
+      box-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+      will-change: transform;
+      pointer-events: none;
+    }
+
+    /* Engineering subtle grid overlay */
+    .cad-grid-bg {
+      background-size: 64px 64px;
+      background-image: 
+        linear-gradient(to right, rgba(238, 234, 226, 0.025) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(238, 234, 226, 0.025) 1px, transparent 1px);
+    }
+
+    /* Very Small Floating Part Micro-Badges */
+    .part-floating-badge {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      background: rgba(8, 20, 16, 0.78);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(176, 138, 86, 0.35);
+      box-shadow: 0 4px 14px -2px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 8.5px;
+      line-height: 1.1;
+      padding: 1.5px 5px;
+      border-radius: 3px;
+      white-space: nowrap;
+      letter-spacing: 0.02em;
+      color: rgba(238, 234, 226, 0.92);
+      pointer-events: none;
+      will-change: left, top, opacity;
+    }
+
+    @media (max-width: 639px) {
+      .part-floating-badge {
+        font-size: 6.8px;
+        padding: 1px 3.5px;
+        border-radius: 2.5px;
+        letter-spacing: 0.01em;
+      }
+    }
+
+    .part-anchor-dot {
+      position: absolute;
+      width: 3px;
+      height: 3px;
+      margin-left: -1.5px;
+      margin-top: -1.5px;
+      border-radius: 9999px;
+      background: #CBA570;
+      box-shadow: 0 0 6px rgba(203, 165, 112, 0.95);
+      pointer-events: none;
+      will-change: left, top, opacity;
+    }
+
+    /* Dynamic viewport height for mobile browsers so bottom bar is never clipped */
+    .hero-sticky-stage {
+      height: 100vh;
+      height: 100dvh;
+    }
+
+    /* Allow vertical page scroll while capturing horizontal touch-drag for 360° rotation */
+    #canvas-container,
+    #canvas-container canvas {
+      touch-action: pan-y;
+    }
+  </style>
+</head>
+<body class="selection:bg-brass/30 selection:text-linen">
+
+  <!-- Transparent Glass Jiggly Cursor Overlay (Desktop) -->
+  <div id="jelly-cursor-layer" class="hidden md:block">
+    <div id="jelly-trail" class="glass-jelly-droplet"></div>
+    <div id="jelly-main" class="glass-jelly-orb"></div>
+    <div id="jelly-dot" class="jelly-core-dot"></div>
+  </div>
+
+  <!-- =====================================================================
+       FIXED CLEAN REFLECTIVE GLASS MENU BAR
+       ===================================================================== -->
+  <header class="fixed top-0 left-0 right-0 z-50 px-4 sm:px-8 pt-3 sm:pt-4 pointer-events-none">
+    <nav id="top-liquid-nav" class="max-w-7xl mx-auto ios-glass-nav rounded-2xl px-4 sm:px-6 py-2.5 flex items-center justify-between pointer-events-auto transition-all duration-300">
+      
+      <!-- White Ironvis Vector Logo Mark + Live Bangladesh Time -->
+      <div class="flex items-center gap-4 sm:gap-6">
+        <a
+          href="#"
+          aria-label="IRONVIS Home"
+          class="flex items-center group py-0.5 focus:outline-none"
+          data-cursor-hover
+        >
+          <svg
+            viewBox="0 0 100 92"
+            class="h-7 sm:h-8 w-auto fill-white drop-shadow-[0_2px_10px_rgba(255,255,255,0.28)] group-hover:drop-shadow-[0_0_16px_rgba(255,255,255,0.65)] group-hover:scale-105 transition-all duration-300"
+            role="img"
+            aria-label="Ironvis Logo"
+          >
+            <polygon points="2,29.5 17.5,29.5 39,66 31,78" />
+            <polygon points="30,29.5 45.5,29.5 59.5,53 98.5,15.5 58.5,77.5" />
+          </svg>
+        </a>
+
+        <div class="hidden lg:flex items-center gap-2 pl-4 border-l border-white/25 text-[11px] font-mono text-white/80 tracking-wider drop-shadow-sm">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span>DHAKA, BD</span>
+          <span class="text-brass">•</span>
+          <span id="live-bd-clock">15:52:00 UTC+6</span>
+        </div>
+      </div>
+
+      <!-- Navigation Links + Quick CTA -->
+      <div class="flex items-center gap-2.5 sm:gap-8">
+        <div class="hidden sm:flex items-center gap-7 text-xs sm:text-sm font-medium text-white/90 drop-shadow-[0_1px_2px_rgba(0,0,0,0.35)]">
+          <a href="#work-showcase" class="hover:text-white transition-colors relative py-1 after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-[1.5px] after:bg-white hover:after:w-full after:transition-all" data-cursor-hover>Work</a>
+          <a href="#services" class="hover:text-white transition-colors relative py-1 after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-[1.5px] after:bg-white hover:after:w-full after:transition-all" data-cursor-hover>Services</a>
+          <a href="#why-ironvis" class="hover:text-white transition-colors relative py-1 after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-[1.5px] after:bg-white hover:after:w-full after:transition-all" data-cursor-hover>Process</a>
+          <a href="#audit-section" class="hover:text-white transition-colors relative py-1 after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-[1.5px] after:bg-white hover:after:w-full after:transition-all" data-cursor-hover>Contact</a>
+        </div>
+
+        <!-- Compact Nav CTA with Blinking Red Dot -->
+        <button
+          onclick="openAuditModal()"
+          class="ios-glass-subpill hover:border-white/50 rounded-full px-3 sm:px-3.5 py-1.5 text-[11px] sm:text-xs font-medium text-white flex items-center gap-2 transition-all duration-300"
+          data-cursor-hover
+        >
+          <span class="relative flex h-2 w-2">
+            <span class="pulse-red-ring absolute inline-flex h-full w-full rounded-full bg-red-500"></span>
+            <span class="blink-red-dot relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+          </span>
+          <span>Book an Audit</span>
+        </button>
+
+        <!-- Mobile Hamburger Menu Toggle (Visible only on < 640px) -->
+        <button
+          id="mobile-menu-btn"
+          onclick="toggleMobileNav()"
+          aria-label="Toggle Menu"
+          class="sm:hidden ios-glass-subpill rounded-xl p-2 text-white/90 hover:text-white focus:outline-none flex items-center justify-center"
+        >
+          <svg id="mobile-menu-icon-open" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+          <svg id="mobile-menu-icon-close" class="w-4 h-4 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+    </nav>
+
+    <!-- Mobile Frosted-Glass Dropdown Menu (< 640px) -->
+    <div
+      id="mobile-nav-drawer"
+      class="sm:hidden hidden max-w-7xl mx-auto mt-2 ios-glass-nav rounded-2xl p-4 pointer-events-auto transition-all duration-300"
+    >
+      <div class="flex flex-col space-y-2.5 text-xs font-medium text-white/90">
+        <a href="#work-showcase" onclick="closeMobileNav()" class="py-1.5 px-2 rounded-lg hover:bg-white/10 transition-colors flex items-center justify-between">
+          <span>Work</span>
+          <span class="text-[10px] font-mono text-brass">01</span>
+        </a>
+        <a href="#services" onclick="closeMobileNav()" class="py-1.5 px-2 rounded-lg hover:bg-white/10 transition-colors flex items-center justify-between">
+          <span>Services</span>
+          <span class="text-[10px] font-mono text-brass">02</span>
+        </a>
+        <a href="#why-ironvis" onclick="closeMobileNav()" class="py-1.5 px-2 rounded-lg hover:bg-white/10 transition-colors flex items-center justify-between">
+          <span>Process</span>
+          <span class="text-[10px] font-mono text-brass">03</span>
+        </a>
+        <a href="#audit-section" onclick="closeMobileNav()" class="py-1.5 px-2 rounded-lg hover:bg-white/10 transition-colors flex items-center justify-between">
+          <span>Contact</span>
+          <span class="text-[10px] font-mono text-brass">04</span>
+        </a>
+        <div class="pt-2.5 mt-1 border-t border-white/15 flex items-center justify-between text-[10px] font-mono text-white/75 px-2">
+          <div class="flex items-center gap-1.5">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span>DHAKA, BD</span>
+          </div>
+          <span id="live-bd-clock-mobile">15:52:00 UTC+6</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- =====================================================================
+       HERO SCROLL-STORY SECTION (340vh Sticky Scroll Track)
+       ===================================================================== -->
+  <section id="hero-scroll-track" class="relative w-full" style="height: 340vh;">
+    
+    <!-- Sticky Full-Viewport 3D Stage -->
+    <div class="sticky top-0 left-0 w-full hero-sticky-stage overflow-hidden studio-backdrop cad-grid-bg flex flex-col justify-between select-none">
+
+      <!-- Subtle Ambient Radial Glow Behind Robot Arm -->
+      <div class="pointer-events-none absolute inset-0 flex items-center justify-center">
+        <div class="w-[68vw] h-[55vh] rounded-full bg-emerald-900/20 blur-[130px]"></div>
+        <div id="brass-core-glow" class="w-[28vw] h-[28vw] rounded-full bg-brass/15 blur-[95px] transition-opacity duration-500"></div>
+      </div>
+
+      <!-- Three.js WebGL Canvas Container -->
+      <div id="canvas-container" class="absolute inset-0 w-full h-full z-10"></div>
+
+      <!-- 18 Floating Micro-Labels & Leader Lines Overlay (Exploded View) -->
+      <div id="so101-micro-labels-layer" class="absolute inset-0 pointer-events-none z-20 overflow-hidden opacity-0 transition-opacity duration-300">
+        <svg id="so101-leader-svg" class="absolute inset-0 w-full h-full pointer-events-none"></svg>
+        <div id="so101-badges-container" class="absolute inset-0 w-full h-full pointer-events-none"></div>
+      </div>
+
+      <!-- TOP / UPPER-CENTER HEADLINE & CTA CLUSTER (Pulled down to align cleanly below fixed navbar) -->
+      <div class="relative z-30 pt-16 sm:pt-24 px-3 sm:px-8 max-w-6xl mx-auto w-full text-center pointer-events-none">
+        
+        <!-- Micro Technical Tag -->
+        <div class="inline-flex items-center gap-1.5 sm:gap-2 mt-1 px-2.5 sm:px-3.5 py-0.5 sm:py-1 rounded-full bg-forest-deep/75 border border-linen/20 backdrop-blur-md mb-2 sm:mb-2.5 shadow-md pointer-events-auto">
+          <span class="w-1.5 h-1.5 rounded-full bg-brass shrink-0"></span>
+          <span class="text-[8.5px] sm:text-[11px] font-mono uppercase tracking-[0.14em] sm:tracking-[0.2em] text-linen/90">
+            3D Visualization for Robot &amp; Industrial Manufacturers
+          </span>
+        </div>
+
+        <!-- Main Editorial Headline -->
+        <h1 class="text-[30px] sm:text-5xl md:text-[52px] lg:text-[58px] font-semibold text-linen tracking-[-0.035em] leading-[1.03] sm:leading-[1.02] max-w-4xl mx-auto drop-shadow-[0_8px_30px_rgba(0,0,0,0.65)]">
+          From engineering<br />
+          to understanding.
+        </h1>
+
+        <!-- CTA ROW: "Book an Audit" Button (with Blinking Red Dot inside) + "Only 2 slots left" beside it -->
+        <div class="mt-2.5 sm:mt-4 flex flex-wrap items-center justify-center gap-2 sm:gap-3 pointer-events-auto">
+          
+          <!-- Primary Frosted Glass Button with Blinking Red Dot Inside -->
+          <button
+            onclick="openAuditModal()"
+            class="ios-glass-pill group relative rounded-full pl-3.5 pr-4 sm:pl-4 sm:pr-5 py-2 sm:py-2.5 text-[11px] sm:text-sm font-semibold text-linen flex items-center gap-2 sm:gap-2.5 border border-brass/40 shadow-2xl"
+            data-cursor-hover
+          >
+            <!-- Blinking Red Dot Inside Button -->
+            <span class="relative flex h-2 w-2 sm:h-2.5 sm:w-2.5 items-center justify-center">
+              <span class="pulse-red-ring absolute inline-flex h-full w-full rounded-full bg-red-500"></span>
+              <span class="blink-red-dot relative inline-flex rounded-full h-2 w-2 bg-[#FF3B30]"></span>
+            </span>
+
+            <span class="tracking-wide">Book an Audit</span>
+
+            <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5 text-brass group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+            </svg>
+          </button>
+
+          <!-- "Only 2 slots left" Message Beside Button -->
+          <div class="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full bg-forest-deep/65 border border-linen/15 backdrop-blur-md shadow-lg">
+            <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+            <span class="text-[10px] sm:text-[11px] font-mono text-linen/90 tracking-tight">
+              Only <strong class="text-brass font-semibold underline decoration-brass/50 underline-offset-2">2 slots left</strong> this month
+            </span>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- BOTTOM HORIZONTAL SCROLL PROGRESS INDICATOR (ASSEMBLE <-> EXPLODED VIEW) -->
+      <div class="relative z-30 pb-3.5 sm:pb-7 px-2.5 sm:px-10 w-full max-w-3xl mx-auto pointer-events-auto">
+        <!-- Subtle Mobile Touch-Gesture Hint (< 640px) -->
+        <div class="sm:hidden text-center mb-1.5 pointer-events-none">
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-forest-deep/70 border border-linen/10 text-[8.5px] font-mono uppercase tracking-[0.14em] text-linen/70 backdrop-blur-sm">
+            <span>SWIPE ↔ 360°</span>
+            <span class="text-brass">•</span>
+            <span>SCROLL ↕ EXPLODE</span>
+          </span>
+        </div>
+
+        <div class="ios-glass-subpill rounded-full px-3 sm:px-6 py-2 sm:py-2.5 flex items-center justify-between gap-2 sm:gap-5 shadow-2xl border border-linen/15">
+          
+          <!-- Left Label: ASSEMBLE (0%) -->
+          <button
+            onclick="scrollToPhase(0)"
+            id="btn-state-assemble"
+            class="text-[9px] sm:text-[11px] font-mono uppercase tracking-[0.12em] sm:tracking-[0.18em] text-brass font-semibold transition-colors flex items-center gap-1.5 sm:gap-2 focus:outline-none shrink-0"
+            data-cursor-hover
+          >
+            <span id="dot-state-assemble" class="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-brass shadow-[0_0_10px_rgba(176,138,86,0.9)] transition-all"></span>
+            <span>Assemble</span>
+          </button>
+
+          <!-- Center Horizontal Scroll Progress Bar Track (Supports Touch/Click Scrubbing) -->
+          <div id="scroll-scrub-track" class="flex-1 sm:flex-initial sm:w-80 md:w-96 flex flex-col gap-1 py-1 cursor-pointer select-none">
+            <div class="relative w-full h-1.5 rounded-full bg-linen/15 overflow-hidden">
+              <!-- Subtle Graduation Ticks -->
+              <div class="absolute inset-0 flex justify-between px-2 pointer-events-none opacity-30">
+                <span class="w-[1px] h-full bg-linen/50"></span>
+                <span class="w-[1px] h-full bg-linen/50"></span>
+                <span class="w-[1px] h-full bg-linen/50"></span>
+                <span class="w-[1px] h-full bg-linen/50"></span>
+                <span class="w-[1px] h-full bg-linen/50"></span>
+              </div>
+              <!-- Metallic Brass Fill Bar -->
+              <div
+                id="scroll-bar-fill"
+                class="h-full rounded-full bg-gradient-to-r from-[#9c8983] via-brass to-brass-light shadow-[0_0_14px_rgba(176,138,86,0.85)] transition-all duration-75"
+                style="width: 0%;"
+              ></div>
+            </div>
+
+            <div class="flex items-center justify-between text-[8px] sm:text-[9px] font-mono text-linen/45 tracking-widest uppercase">
+              <span>0%</span>
+              <span id="scroll-pct-label" class="text-linen/75 font-medium truncate px-1">SCROLL PROGRESS • 0%</span>
+              <span>100%</span>
+            </div>
+          </div>
+
+          <!-- Right Label: EXPLODED VIEW (100%) -->
+          <button
+            onclick="scrollToPhase(1)"
+            id="btn-state-explode"
+            class="text-[9px] sm:text-[11px] font-mono uppercase tracking-[0.12em] sm:tracking-[0.18em] text-linen/55 hover:text-linen transition-colors flex items-center gap-1.5 sm:gap-2 focus:outline-none shrink-0"
+            data-cursor-hover
+          >
+            <span>Exploded View</span>
+            <span id="dot-state-explode" class="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-linen/25 transition-all"></span>
+          </button>
+
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       SECTION 2: THE VISUAL GAP (Why Robot Manufacturers Need Ironvis)
+       ===================================================================== -->
+  <section id="why-ironvis" class="relative py-16 sm:py-32 px-4 sm:px-8 bg-[#0B1D18] border-t border-linen/10">
+    <div class="max-w-7xl mx-auto">
+      
+      <!-- Section Header -->
+      <div class="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16">
+        <div>
+          <div class="inline-flex items-center gap-2 text-xs font-mono uppercase tracking-[0.2em] text-brass mb-3">
+            <span>01 // THE INDUSTRIAL VISUAL GAP</span>
+          </div>
+          <h2 class="text-3xl sm:text-5xl font-semibold text-linen tracking-tight leading-[1.12] max-w-2xl">
+            Great engineering loses deals when buyers can’t see inside.
+          </h2>
+        </div>
+        <p class="text-linen/70 text-sm sm:text-base max-w-md leading-relaxed">
+          Your prospects aren’t just engineers—they’re VPs of Operations, Procurement Leads, and Integrators. Static PDF datasheets and raw SolidWorks screenshots don’t justify a six-figure automation investment.
+        </p>
+      </div>
+
+      <!-- 3-Column Market Positioning Comparison -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Option 1: Cheap Freelancers -->
+        <div class="rounded-2xl p-7 bg-forest-deep/70 border border-linen/10 flex flex-col justify-between">
+          <div>
+            <span class="text-[11px] font-mono uppercase tracking-widest text-linen/45">Low-Price Freelancers</span>
+            <h3 class="mt-2 text-xl font-semibold text-linen/85">Cheap, but mechanically inaccurate</h3>
+            <ul class="mt-6 space-y-3.5 text-sm text-linen/65">
+              <li class="flex items-start gap-2.5">
+                <span class="text-red-400 font-mono mt-0.5">×</span>
+                <span>Don’t understand 6-axis kinematics, harmonic drives, or cable routing</span>
+              </li>
+              <li class="flex items-start gap-2.5">
+                <span class="text-red-400 font-mono mt-0.5">×</span>
+                <span>Overuse cheesy neon sci-fi glow and plastic textures that hurt B2B trust</span>
+              </li>
+              <li class="flex items-start gap-2.5">
+                <span class="text-red-400 font-mono mt-0.5">×</span>
+                <span>You spend 20+ hours of your senior engineer’s time fixing their mistakes</span>
+              </li>
+            </ul>
+          </div>
+          <div class="mt-8 pt-4 border-t border-linen/10 flex items-center justify-between text-xs font-mono text-linen/45">
+            <span>RESULT</span>
+            <span>LOW BUYER CONFIDENCE</span>
+          </div>
+        </div>
+
+        <!-- Option 2: IRONVIS (Highlighted Center Card) -->
+        <div class="ios-glass-card rounded-2xl p-8 border border-brass/50 relative overflow-hidden flex flex-col justify-between shadow-2xl lg:-translate-y-3">
+          <div class="absolute top-0 right-0 bg-brass text-forest-deep text-[10px] font-mono font-bold uppercase tracking-widest px-3 py-1 rounded-bl-lg">
+            THE IRONVIS SWEET SPOT
+          </div>
+          <div>
+            <span class="text-[11px] font-mono uppercase tracking-widest text-brass">Specialist Partner</span>
+            <h3 class="mt-2 text-2xl font-semibold text-linen">IRONVIS Studio</h3>
+            <p class="mt-2 text-xs text-linen/70">Consultant-led industrial visualization built for robotics &amp; machinery manufacturers.</p>
+            <ul class="mt-6 space-y-3.5 text-sm text-linen/90">
+              <li class="flex items-start gap-2.5">
+                <span class="text-brass font-mono mt-0.5">✓</span>
+                <span><strong>Direct STEP / SolidWorks intake:</strong> We preserve exact fastener geometry, tolerances, and kinematics</span>
+              </li>
+              <li class="flex items-start gap-2.5">
+                <span class="text-brass font-mono mt-0.5">✓</span>
+                <span><strong>Sales-first storytelling:</strong> Designed to answer buyer objections in seconds on trade-show screens &amp; pitch decks</span>
+              </li>
+              <li class="flex items-start gap-2.5">
+                <span class="text-brass font-mono mt-0.5">✓</span>
+                <span><strong>Agile $2k–$10k project scope:</strong> Direct senior specialist attention without enterprise agency bloat</span>
+              </li>
+            </ul>
+          </div>
+          <div class="mt-8 pt-4 border-t border-brass/30 flex items-center justify-between text-xs font-mono text-brass">
+            <span>TURNAROUND</span>
+            <span>10–21 DAYS • HIGH IMPACT</span>
+          </div>
+        </div>
+
+        <!-- Option 3: Big Agencies -->
+        <div class="rounded-2xl p-7 bg-forest-deep/70 border border-linen/10 flex flex-col justify-between">
+          <div>
+            <span class="text-[11px] font-mono uppercase tracking-widest text-linen/45">Large Visualization Agencies</span>
+            <h3 class="mt-2 text-xl font-semibold text-linen/85">High quality, but slow &amp; overpriced</h3>
+            <ul class="mt-6 space-y-3.5 text-sm text-linen/65">
+              <li class="flex items-start gap-2.5">
+                <span class="text-red-400 font-mono mt-0.5">×</span>
+                <span>$25,000 to $80,000+ minimum retainers that price out mid-market launches</span>
+              </li>
+              <li class="flex items-start gap-2.5">
+                <span class="text-red-400 font-mono mt-0.5">×</span>
+                <span>Mid-budget robotics accounts get handed off to junior generalists</span>
+              </li>
+              <li class="flex items-start gap-2.5">
+                <span class="text-red-400 font-mono mt-0.5">×</span>
+                <span>8–12 week timelines that miss your Automate or Automatica trade show deadline</span>
+              </li>
+            </ul>
+          </div>
+          <div class="mt-8 pt-4 border-t border-linen/10 flex items-center justify-between text-xs font-mono text-linen/45">
+            <span>RESULT</span>
+            <span>BLOWN MARKETING BUDGET</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       SECTION 3: CORE VISUALIZATION SERVICES (Quiet-Luxury Palette)
+       ===================================================================== -->
+  <section id="services" class="relative py-16 sm:py-32 px-4 sm:px-8 bg-[#EEEAE2] text-[#151B18]">
+    <div class="max-w-7xl mx-auto">
+      
+      <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-16 pb-8 border-b border-[#343A37]/15">
+        <div>
+          <span class="text-xs font-mono uppercase tracking-[0.2em] text-[#183A32] font-semibold">02 // CORE CAPABILITIES</span>
+          <h2 class="mt-2 text-3xl sm:text-5xl font-semibold text-[#183A32] tracking-tight">
+            Show how it works. Sell why it matters.
+          </h2>
+        </div>
+        <p class="text-sm sm:text-base text-[#343A37]/80 max-w-md">
+          Every asset is engineered from your native CAD assemblies so a single file powers your website hero, trade-show booth loop, and technical sales deck.
+        </p>
+      </div>
+
+      <!-- 3 Service Pillars -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        
+        <!-- Pillar 1 -->
+        <div class="group bg-[#F6F4EF] border border-[#343A37]/12 rounded-2xl p-7 hover:border-[#183A32]/50 transition-all duration-300 shadow-sm hover:shadow-xl flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between text-xs font-mono text-[#7D8066] mb-6">
+              <span>SERVICE 01</span>
+              <span class="px-2.5 py-0.5 rounded-full bg-[#183A32]/10 text-[#183A32] font-medium">4K STILL &amp; TURNTABLE</span>
+            </div>
+            <h3 class="text-2xl font-semibold text-[#183A32] group-hover:text-[#B08A56] transition-colors">
+              Photoreal Studio Product Renders
+            </h3>
+            <p class="mt-3 text-sm text-[#343A37]/80 leading-relaxed">
+              Physically accurate satin powder-coat, anodized aluminum, and brushed brass materials lit in a calm architectural studio environment—before your physical prototype even leaves the assembly floor.
+            </p>
+          </div>
+          <div class="mt-8 pt-5 border-t border-[#343A37]/10">
+            <div class="text-xs font-mono text-[#343A37]/60 space-y-1">
+              <div>• Hero Website &amp; Datasheet Visuals</div>
+              <div>• Consistent Multi-Product Line Styling</div>
+              <div>• Zero Distracting Sci-Fi Clichés</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pillar 2 -->
+        <div class="group bg-[#183A32] text-[#EEEAE2] rounded-2xl p-7 border border-[#B08A56]/40 shadow-xl flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between text-xs font-mono text-[#B08A56] mb-6">
+              <span>SERVICE 02 • MOST POPULAR</span>
+              <span class="px-2.5 py-0.5 rounded-full bg-[#B08A56]/20 text-[#EEEAE2]">MOTION STORY</span>
+            </div>
+            <h3 class="text-2xl font-semibold text-[#EEEAE2]">
+              Exploded-View &amp; Process Animation
+            </h3>
+            <p class="mt-3 text-sm text-[#EEEAE2]/75 leading-relaxed">
+              Just like the interactive SO-101 assembly above, we split your machine along true mechanical axes to reveal internal gearboxes, harmonic drives, sensor arrays, and modular maintenance swaps.
+            </p>
+          </div>
+          <div class="mt-8 pt-5 border-t border-[#EEEAE2]/15">
+            <div class="text-xs font-mono text-[#EEEAE2]/75 space-y-1">
+              <div>• 30s–90s Trade-Show Booth Loops</div>
+              <div>• Scroll-Driven WebGL / Lottie Sequences</div>
+              <div>• LinkedIn &amp; Launch Video Cutdowns</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pillar 3 -->
+        <div class="group bg-[#F6F4EF] border border-[#343A37]/12 rounded-2xl p-7 hover:border-[#183A32]/50 transition-all duration-300 shadow-sm hover:shadow-xl flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between text-xs font-mono text-[#7D8066] mb-6">
+              <span>SERVICE 03</span>
+              <span class="px-2.5 py-0.5 rounded-full bg-[#183A32]/10 text-[#183A32] font-medium">INTERACTIVE 3D</span>
+            </div>
+            <h3 class="text-2xl font-semibold text-[#183A32] group-hover:text-[#B08A56] transition-colors">
+              Interactive 3D &amp; Spare-Parts Catalogs
+            </h3>
+            <p class="mt-3 text-sm text-[#343A37]/80 leading-relaxed">
+              Let sales engineers and customers rotate, explode, and click individual sub-assemblies right in their browser to inspect end-of-arm tooling options or order replacement modules.
+            </p>
+          </div>
+          <div class="mt-8 pt-5 border-t border-[#343A37]/10">
+            <div class="text-xs font-mono text-[#343A37]/60 space-y-1">
+              <div>• Web-Ready GLB / Three.js Viewers</div>
+              <div>• Interactive Sales Pitch Decks</div>
+              <div>• Spare-Part Callout Integration</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       SECTION 4: INTERACTIVE ENGINEERING INSPECTION SHOWCASE
+       ===================================================================== -->
+  <section id="work-showcase" class="relative py-16 sm:py-32 px-4 sm:px-8 bg-[#0E241E] border-t border-linen/10">
+    <div class="max-w-7xl mx-auto">
+      <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-14">
+        <div>
+          <span class="text-xs font-mono uppercase tracking-[0.2em] text-brass">03 // SPECIMEN MODULES</span>
+          <h2 class="mt-2 text-3xl sm:text-4xl font-semibold text-linen tracking-tight">
+            Built for technical scrutiny.
+          </h2>
+        </div>
+        <button
+          onclick="scrollToPhase(1)"
+          class="self-start md:self-auto ios-glass-pill px-4 py-2 rounded-full text-xs font-mono text-linen flex items-center gap-2"
+          data-cursor-hover
+        >
+          <span>↑ Inspect SO-101 Exploded Assembly</span>
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Spec Card 1 -->
+        <div class="ios-glass-card rounded-2xl p-6 border border-linen/10 hover:border-brass/40 transition-all">
+          <div class="h-44 rounded-xl bg-gradient-to-br from-[#183A32] to-[#0A1814] border border-linen/10 flex flex-col justify-between p-4 relative overflow-hidden">
+            <div class="flex justify-between items-center text-[10px] font-mono text-linen/60">
+              <span>ASSY // 01-HD</span>
+              <span class="text-brass">RATIO 100:1</span>
+            </div>
+            <svg class="w-28 h-28 mx-auto text-brass/80" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="1.5">
+              <circle cx="50" cy="50" r="38" stroke-dasharray="4 3" class="text-linen/30" />
+              <circle cx="50" cy="50" r="28" />
+              <circle cx="50" cy="50" r="14" class="text-linen/70" />
+              <line x1="10" y1="50" x2="90" y2="50" stroke-dasharray="2 2" class="text-linen/25" />
+              <line x1="50" y1="10" x2="50" y2="90" stroke-dasharray="2 2" class="text-linen/25" />
+            </svg>
+            <div class="text-[10px] font-mono text-linen/50">ZERO-BACKLASH STRAIN WAVE</div>
+          </div>
+          <h3 class="mt-5 text-lg font-semibold text-linen">Harmonic Drive Cutaways</h3>
+          <p class="mt-2 text-xs text-linen/65 leading-relaxed">
+            Highlight zero-backlash wave generators, cross-roller bearings, and sealing tolerances that differentiate your actuator from commodity imports.
+          </p>
+        </div>
+
+        <!-- Spec Card 2 -->
+        <div class="ios-glass-card rounded-2xl p-6 border border-linen/10 hover:border-brass/40 transition-all">
+          <div class="h-44 rounded-xl bg-gradient-to-br from-[#183A32] to-[#0A1814] border border-linen/10 flex flex-col justify-between p-4 relative overflow-hidden">
+            <div class="flex justify-between items-center text-[10px] font-mono text-linen/60">
+              <span>ASSY // 02-EOAT</span>
+              <span class="text-brass">STROKE 40MM</span>
+            </div>
+            <svg class="w-28 h-28 mx-auto text-linen/80" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="1.5">
+              <rect x="22" y="32" width="24" height="36" rx="2" />
+              <path d="M46 36 L76 26 L76 42 L54 45 Z" class="text-brass" />
+              <path d="M46 64 L76 74 L76 58 L54 55 Z" class="text-brass" />
+              <line x1="12" y1="50" x2="88" y2="50" stroke-dasharray="3 3" class="text-linen/30" />
+            </svg>
+            <div class="text-[10px] font-mono text-linen/50">PARALLEL SERVO GRIPPER KINEMATICS</div>
+          </div>
+          <h3 class="mt-5 text-lg font-semibold text-linen">End-of-Arm Tooling (EOAT)</h3>
+          <p class="mt-2 text-xs text-linen/65 leading-relaxed">
+            Demonstrate quick-change tool flanges, spur gear rack drives, and finger force profiles clearly for system integrators.
+          </p>
+        </div>
+
+        <!-- Spec Card 3 -->
+        <div class="ios-glass-card rounded-2xl p-6 border border-linen/10 hover:border-brass/40 transition-all">
+          <div class="h-44 rounded-xl bg-gradient-to-br from-[#183A32] to-[#0A1814] border border-linen/10 flex flex-col justify-between p-4 relative overflow-hidden">
+            <div class="flex justify-between items-center text-[10px] font-mono text-linen/60">
+              <span>ASSY // 03-CELL</span>
+              <span class="text-brass">CYCLE 1.8S</span>
+            </div>
+            <svg class="w-28 h-28 mx-auto text-linen/80" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="1.5">
+              <polygon points="50,18 82,36 82,68 50,86 18,68 18,36" class="text-linen/40" />
+              <polyline points="18,36 50,54 82,36" />
+              <line x1="50" y1="54" x2="50" y2="86" />
+              <circle cx="50" cy="54" r="6" class="text-brass" />
+            </svg>
+            <div class="text-[10px] font-mono text-linen/50">MODULAR WORKCELL STORYTELLING</div>
+          </div>
+          <h3 class="mt-5 text-lg font-semibold text-linen">Full Workcell Explainers</h3>
+          <p class="mt-2 text-xs text-linen/65 leading-relaxed">
+            Turn 20-page technical proposals into a clean 60-second visual narrative showing footprint, safety zones, and throughput.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       SECTION 5: BOOK A VISUAL AUDIT SECTION (With Blinking Red Dot & 2 Slots Left)
+       ===================================================================== -->
+  <section id="audit-section" class="relative py-16 sm:py-32 px-4 sm:px-8 studio-backdrop border-t border-linen/15">
+    <div class="max-w-4xl mx-auto ios-glass-card rounded-3xl p-6 sm:p-12 border border-brass/40 relative overflow-hidden">
+      
+      <div class="flex flex-wrap items-center justify-between gap-4 pb-6 border-b border-linen/15">
+        <div class="flex items-center gap-3">
+          <span class="relative flex h-3 w-3">
+            <span class="pulse-red-ring absolute inline-flex h-full w-full rounded-full bg-red-500"></span>
+            <span class="blink-red-dot relative inline-flex rounded-full h-3 w-3 bg-[#FF3B30]"></span>
+          </span>
+          <span class="text-xs font-mono uppercase tracking-widest text-linen">LIVE ONBOARDING STATUS: NOVEMBER 2026</span>
+        </div>
+        <span class="px-3 py-1 rounded-full bg-brass/20 border border-brass/50 text-xs font-mono text-brass font-semibold">
+          Only 2 slots left
+        </span>
+      </div>
+
+      <div class="mt-8 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+        <div class="lg:col-span-7">
+          <h2 class="text-3xl sm:text-4xl font-semibold text-linen tracking-tight leading-tight">
+            Not sure which visual will move the needle for your sales team?
+          </h2>
+          <p class="mt-4 text-sm sm:text-base text-linen/75 leading-relaxed">
+            Book a friction-free <strong>15-Minute Visual Workflow Audit</strong> with Mahdi at Ironvis. We’ll review your current product datasheets, website, and trade-show material, and map out the exact 3D visual assets that will make your machinery effortless to understand.
+          </p>
+          <div class="mt-6 space-y-2 text-xs font-mono text-linen/70">
+            <div>✓ Honest feedback—no generic agency pitch</div>
+            <div>✓ Direct STEP / SolidWorks feasibility check</div>
+            <div>✓ Clear fixed-scope pricing ($2k–$10k typical range)</div>
+          </div>
+        </div>
+
+        <div class="lg:col-span-5 bg-forest-deep/75 border border-linen/15 rounded-2xl p-6">
+          <form id="inline-audit-form" onsubmit="handleAuditSubmit(event)" class="space-y-4">
+            <div>
+              <label class="block text-[11px] font-mono uppercase text-linen/60 mb-1">Work Email</label>
+              <input
+                type="email"
+                required
+                placeholder="name@robotics-company.com"
+                class="w-full rounded-xl bg-forest-mid/80 border border-linen/20 px-3.5 py-2.5 text-sm text-linen placeholder-linen/30 focus:outline-none focus:border-brass"
+                data-cursor-hover
+              />
+            </div>
+            <div>
+              <label class="block text-[11px] font-mono uppercase text-linen/60 mb-1">Primary Goal</label>
+              <select
+                class="w-full rounded-xl bg-forest-mid/80 border border-linen/20 px-3.5 py-2.5 text-sm text-linen focus:outline-none focus:border-brass"
+                data-cursor-hover
+              >
+                <option value="exploded">Exploded-View Product Animation</option>
+                <option value="renders">Photoreal Studio Product Renders</option>
+                <option value="interactive">Interactive 3D Web / Catalog Viewer</option>
+                <option value="audit">Full Visual Gap Audit</option>
+              </select>
+            </div>
+            <button
+              type="submit"
+              class="w-full ios-glass-pill rounded-xl py-3.5 px-5 text-sm font-semibold text-linen flex items-center justify-center gap-3 border border-brass/50"
+              data-cursor-hover
+            >
+              <span class="relative flex h-2.5 w-2.5">
+                <span class="pulse-red-ring absolute inline-flex h-full w-full rounded-full bg-red-500"></span>
+                <span class="blink-red-dot relative inline-flex rounded-full h-2.5 w-2.5 bg-[#FF3B30]"></span>
+              </span>
+              <span>Book an Audit</span>
+            </button>
+            <p class="text-center text-[11px] font-mono text-brass">
+              ⚡ Only 2 slots left for November production
+            </p>
+          </form>
+          <div id="audit-success-msg" class="hidden text-center py-6 space-y-3">
+            <div class="w-10 h-10 rounded-full bg-emerald-500/20 border border-emerald-400 text-emerald-300 flex items-center justify-center mx-auto font-mono">✓</div>
+            <h4 class="text-base font-semibold text-linen">Audit Slot Reserved</h4>
+            <p class="text-xs text-linen/70">Mahdi from Ironvis will send your personalized visual audit &amp; calendar link within 24 hours.</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="bg-[#07120F] border-t border-linen/10 py-12 px-4 sm:px-8 text-xs text-linen/50 font-mono">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+      <div class="flex flex-wrap items-center justify-center md:justify-start gap-3 text-center md:text-left">
+        <span class="text-linen font-sans font-bold tracking-[0.22em]">IRONVIS</span>
+        <span class="hidden sm:inline">•</span>
+        <span>3D VISUALIZATION FOR ROBOTICS &amp; INDUSTRIAL MACHINERY</span>
+      </div>
+
+      <!-- Social Links: LinkedIn Company Page & YouTube (Coming Soon) -->
+      <div class="flex items-center gap-3">
+        <!-- LinkedIn Company Page -->
+        <a
+          href="https://www.linkedin.com/company/107537365/"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="IRONVIS LinkedIn Company Page"
+          title="IRONVIS on LinkedIn"
+          class="ios-glass-subpill hover:border-brass/60 hover:text-linen text-linen/75 rounded-full px-3.5 py-2 flex items-center gap-2 transition-all duration-300 group"
+          data-cursor-hover
+        >
+          <svg class="w-3.5 h-3.5 fill-current text-brass group-hover:scale-110 transition-transform" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z"/>
+          </svg>
+          <span class="text-[10px] tracking-widest uppercase">LinkedIn</span>
+        </a>
+
+        <!-- YouTube Channel Placeholder (No Channel Yet) -->
+        <a
+          href="#!"
+          onclick="event.preventDefault();"
+          aria-label="IRONVIS YouTube Channel (Coming Soon)"
+          title="YouTube Channel Coming Soon"
+          class="ios-glass-subpill hover:border-linen/35 text-linen/60 hover:text-linen/85 rounded-full px-3.5 py-2 flex items-center gap-2 transition-all duration-300 group relative"
+          data-cursor-hover
+        >
+          <svg class="w-4 h-4 fill-current text-linen/60 group-hover:text-brass transition-colors" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+          </svg>
+          <span class="text-[10px] tracking-widest uppercase">YouTube</span>
+          <span class="text-[8px] px-1.5 py-0.5 rounded bg-linen/10 text-brass border border-brass/30 tracking-wider uppercase">Soon</span>
+        </a>
+      </div>
+
+      <div class="text-center md:text-right">
+        <span>© 2026 IRONVIS STUDIO. ALL RIGHTS RESERVED.</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- =====================================================================
+       MODAL FOR "BOOK AN AUDIT"
+       ===================================================================== -->
+  <div id="audit-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/70 backdrop-blur-md">
+    <div class="ios-glass-card max-w-md w-full rounded-3xl p-6 sm:p-8 border border-brass/50 relative animate-fadeIn">
+      <button
+        onclick="closeAuditModal()"
+        class="absolute top-5 right-5 w-8 h-8 rounded-full bg-linen/10 hover:bg-linen/20 flex items-center justify-center text-linen/80 font-mono text-sm"
+        data-cursor-hover
+      >
+        ✕
+      </button>
+
+      <div class="flex items-center gap-2.5 text-xs font-mono text-brass mb-2">
+        <span class="relative flex h-2.5 w-2.5">
+          <span class="pulse-red-ring absolute inline-flex h-full w-full rounded-full bg-red-500"></span>
+          <span class="blink-red-dot relative inline-flex rounded-full h-2.5 w-2.5 bg-[#FF3B30]"></span>
+        </span>
+        <span>ONLY 2 SLOTS LEFT THIS MONTH</span>
+      </div>
+
+      <h3 class="text-2xl font-semibold text-linen">Book Your Visual Workflow Audit</h3>
+      <p class="mt-2 text-xs sm:text-sm text-linen/70 leading-relaxed">
+        Share your product page or CAD goals below. We’ll record a custom 3D visual teardown showing how to make your robot or machine immediately clear to buyers.
+      </p>
+
+      <form onsubmit="handleModalSubmit(event)" id="modal-audit-form" class="mt-5 space-y-4">
+        <div>
+          <label class="block text-[11px] font-mono uppercase text-linen/60 mb-1">Your Name &amp; Role</label>
+          <input type="text" required placeholder="Alex Rivera — VP of Marketing" class="w-full rounded-xl bg-forest-deep/90 border border-linen/20 px-3.5 py-2.5 text-sm text-linen placeholder-linen/30 focus:outline-none focus:border-brass" data-cursor-hover />
+        </div>
+        <div>
+          <label class="block text-[11px] font-mono uppercase text-linen/60 mb-1">Company Email</label>
+          <input type="email" required placeholder="alex@robotics-oem.com" class="w-full rounded-xl bg-forest-deep/90 border border-linen/20 px-3.5 py-2.5 text-sm text-linen placeholder-linen/30 focus:outline-none focus:border-brass" data-cursor-hover />
+        </div>
+        <div>
+          <label class="block text-[11px] font-mono uppercase text-linen/60 mb-1">Website / Product Line URL</label>
+          <input type="text" placeholder="https://..." class="w-full rounded-xl bg-forest-deep/90 border border-linen/20 px-3.5 py-2.5 text-sm text-linen placeholder-linen/30 focus:outline-none focus:border-brass" data-cursor-hover />
+        </div>
+        <button type="submit" class="w-full ios-glass-pill rounded-xl py-3.5 text-sm font-semibold text-linen flex items-center justify-center gap-2.5 border border-brass/60" data-cursor-hover>
+          <span class="relative flex h-2.5 w-2.5">
+            <span class="pulse-red-ring absolute inline-flex h-full w-full rounded-full bg-red-500"></span>
+            <span class="blink-red-dot relative inline-flex rounded-full h-2.5 w-2.5 bg-[#FF3B30]"></span>
+          </span>
+          <span>Confirm Audit Request</span>
+        </button>
+      </form>
+
+      <div id="modal-success" class="hidden text-center py-6 space-y-3">
+        <div class="w-12 h-12 rounded-full bg-emerald-500/20 border border-emerald-400 text-emerald-300 flex items-center justify-center mx-auto text-lg font-mono">✓</div>
+        <h4 class="text-lg font-semibold text-linen">Audit Request Received</h4>
+        <p class="text-xs text-linen/75">We’ve locked in one of the 2 remaining slots for your review. Expect a personal reply from Mahdi shortly.</p>
+        <button onclick="closeAuditModal()" class="mt-2 px-5 py-2 rounded-full bg-linen/15 text-xs font-mono text-linen">Close Window</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =====================================================================
+       JAVASCRIPT: LIVE CLOCK, LIQUID JELLY CURSOR, AND IRONVIS SO-101 3D ARM
+       ===================================================================== -->
+  <script>
+    /* ---------------------------------------------------------------------
+       1. LIVE DHAKA, BANGLADESH CLOCK (UTC+6)
+       --------------------------------------------------------------------- */
+    function updateBangladeshClock() {
+      const clockEl = document.getElementById('live-bd-clock');
+      const clockMobileEl = document.getElementById('live-bd-clock-mobile');
+      try {
+        const now = new Date();
+        const formatter = new Intl.DateTimeFormat('en-US', {
+          timeZone: 'Asia/Dhaka',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: false
+        });
+        const formatted = `${formatter.format(now)} UTC+6`;
+        if (clockEl) clockEl.textContent = formatted;
+        if (clockMobileEl) clockMobileEl.textContent = formatted;
+      } catch (e) {
+        if (clockEl) clockEl.textContent = '15:52:00 UTC+6';
+        if (clockMobileEl) clockMobileEl.textContent = '15:52:00 UTC+6';
+      }
+    }
+    setInterval(updateBangladeshClock, 1000);
+    updateBangladeshClock();
+
+    /* ---------------------------------------------------------------------
+       2. AUDIT MODAL, MOBILE DRAWER & FORM HANDLERS (No alert() used)
+       --------------------------------------------------------------------- */
+    function toggleMobileNav() {
+      const drawer = document.getElementById('mobile-nav-drawer');
+      const openIcon = document.getElementById('mobile-menu-icon-open');
+      const closeIcon = document.getElementById('mobile-menu-icon-close');
+      if (!drawer) return;
+      const isHidden = drawer.classList.contains('hidden');
+      if (isHidden) {
+        drawer.classList.remove('hidden');
+        if (openIcon) openIcon.classList.add('hidden');
+        if (closeIcon) closeIcon.classList.remove('hidden');
+      } else {
+        drawer.classList.add('hidden');
+        if (openIcon) openIcon.classList.remove('hidden');
+        if (closeIcon) closeIcon.classList.add('hidden');
+      }
+    }
+
+    function closeMobileNav() {
+      const drawer = document.getElementById('mobile-nav-drawer');
+      const openIcon = document.getElementById('mobile-menu-icon-open');
+      const closeIcon = document.getElementById('mobile-menu-icon-close');
+      if (drawer) drawer.classList.add('hidden');
+      if (openIcon) openIcon.classList.remove('hidden');
+      if (closeIcon) closeIcon.classList.add('hidden');
+    }
+
+    function openAuditModal() {
+      closeMobileNav();
+      const modal = document.getElementById('audit-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeAuditModal() {
+      const modal = document.getElementById('audit-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function handleAuditSubmit(e) {
+      e.preventDefault();
+      document.getElementById('inline-audit-form').classList.add('hidden');
+      document.getElementById('audit-success-msg').classList.remove('hidden');
+    }
+
+    function handleModalSubmit(e) {
+      e.preventDefault();
+      document.getElementById('modal-audit-form').classList.add('hidden');
+      document.getElementById('modal-success').classList.remove('hidden');
+    }
+
+    /* ---------------------------------------------------------------------
+       3. TRANSPARENT GLASS JIGGLY MOUSE CURSOR
+       --------------------------------------------------------------------- */
+    (function initGlassJigglyCursor() {
+      const mainOrb = document.getElementById('jelly-main');
+      const trailDroplet = document.getElementById('jelly-trail');
+      const coreDot = document.getElementById('jelly-dot');
+      if (!mainOrb || !trailDroplet) return;
+
+      let mouseX = window.innerWidth / 2;
+      let mouseY = window.innerHeight / 2;
+      let posX = mouseX;
+      let posY = mouseY;
+      let velX = 0;
+      let velY = 0;
+      let trailX = mouseX;
+      let trailY = mouseY;
+      let trailVelX = 0;
+      let trailVelY = 0;
+      let jiggleDisp = 0;
+      let jiggleVel = 0;
+      let prevSpeed = 0;
+      let isHoveringInteractive = false;
+      let baseScale = 1.0;
+      let scaleVel = 0;
+
+      window.addEventListener('mousemove', (e) => {
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+      }, { passive: true });
+
+      window.addEventListener('mousedown', () => {
+        jiggleVel += 0.65;
+        scaleVel -= 0.18;
+      });
+
+      document.querySelectorAll('a, button, input, select, [data-cursor-hover]').forEach((el) => {
+        el.addEventListener('mouseenter', () => {
+          isHoveringInteractive = true;
+          jiggleVel += 0.48;
+        });
+        el.addEventListener('mouseleave', () => {
+          isHoveringInteractive = false;
+          jiggleVel -= 0.35;
+        });
+      });
+
+      let t = 0;
+      function animateGlassCursor() {
+        t += 0.08;
+
+        const stiffness = 0.21;
+        const damping = 0.76;
+        const dx = mouseX - posX;
+        const dy = mouseY - posY;
+
+        velX = (velX + dx * stiffness) * damping;
+        velY = (velY + dy * stiffness) * damping;
+        posX += velX;
+        posY += velY;
+
+        const tDx = posX - trailX;
+        const tDy = posY - trailY;
+        trailVelX = (trailVelX + tDx * 0.16) * 0.78;
+        trailVelY = (trailVelY + tDy * 0.16) * 0.78;
+        trailX += trailVelX;
+        trailY += trailVelY;
+
+        const speed = Math.hypot(velX, velY);
+        const accel = speed - prevSpeed;
+        prevSpeed = speed;
+
+        jiggleVel += accel * 0.028;
+        const jiggleStiff = 0.34;
+        const jiggleDamp = 0.86;
+        jiggleVel = (jiggleVel - jiggleDisp * jiggleStiff) * jiggleDamp;
+        jiggleDisp += jiggleVel;
+
+        const targetScale = isHoveringInteractive ? 1.52 : 1.0;
+        scaleVel = (scaleVel + (targetScale - baseScale) * 0.22) * 0.78;
+        baseScale += scaleVel;
+
+        const angle = Math.atan2(velY, velX) * (180 / Math.PI);
+        const velStretch = Math.min(speed * 0.036, 0.58);
+        const harmonicWobble = jiggleDisp * 0.42 + Math.sin(t * 1.7) * 0.018;
+
+        const scaleX = baseScale * (1 + velStretch + harmonicWobble);
+        const scaleY = baseScale * Math.max(0.54, 1 - velStretch * 0.46 - harmonicWobble * 0.85);
+
+        const r1 = 50 + Math.sin(t * 2.2) * 6 + jiggleDisp * 18;
+        const r2 = 50 - Math.sin(t * 2.2) * 6 - jiggleDisp * 18;
+        const r3 = 50 + Math.cos(t * 1.9) * 5 - jiggleDisp * 14;
+        const r4 = 50 - Math.cos(t * 1.9) * 5 + jiggleDisp * 14;
+        mainOrb.style.borderRadius = `${r1.toFixed(1)}% ${r2.toFixed(1)}% ${r3.toFixed(1)}% ${r4.toFixed(1)}%`;
+
+        mainOrb.style.transform = `translate3d(${posX.toFixed(2)}px, ${posY.toFixed(2)}px, 0) rotate(${angle.toFixed(1)}deg) scale(${scaleX.toFixed(3)}, ${scaleY.toFixed(3)})`;
+        trailDroplet.style.transform = `translate3d(${trailX.toFixed(2)}px, ${trailY.toFixed(2)}px, 0) scale(${(baseScale * (0.75 + Math.abs(jiggleDisp) * 0.25)).toFixed(3)})`;
+        coreDot.style.transform = `translate3d(${mouseX.toFixed(2)}px, ${mouseY.toFixed(2)}px, 0) scale(${isHoveringInteractive ? 0.4 : 1})`;
+
+        requestAnimationFrame(animateGlassCursor);
+      }
+
+      requestAnimationFrame(animateGlassCursor);
+    })();
+
+    /* ---------------------------------------------------------------------
+       4. THREE.JS IRONVIS SO-101 ROBOTIC ARM ASSEMBLY
+          - High-Luster #9c8983 Metallic Body + Satin Bronze & Brushed Aluminum
+            Nuts/Screws
+          - Multi-Panel Studio HDRI + 7-Light Setup with Soft Shadows
+          - 360° Mouse & Touch Inspection Rotation
+          - Downward Pose (0% Assemble) -> Rising + Dynamic Multi-Axis Explode
+            (100% Exploded View)
+          - 18 Ultra-Compact Floating Micro-Badges with SVG Leader Lines
+       --------------------------------------------------------------------- */
+    let explodeFactor = 0.0;       // Starts at 0.0 (Assembled Downward Pose) -> 1.0 (Exploded View)
+    let targetExplodeFactor = 0.0;
+    const cadMeshes = [];
+
+    function scrollToPhase(normalizedProgress) {
+      const track = document.getElementById('hero-scroll-track');
+      if (!track) return;
+      const scrollableDistance = track.offsetHeight - window.innerHeight;
+      const targetScrollY = track.offsetTop + scrollableDistance * normalizedProgress;
+      window.scrollTo({ top: targetScrollY, behavior: 'smooth' });
+    }
+
+    // Multi-Panel Studio HDRI Environment via PMREMGenerator for realistic metallic reflections
+    function createPMREMStudioEnvironment(renderer) {
+      const pmremGenerator = new THREE.PMREMGenerator(renderer);
+      pmremGenerator.compileEquirectangularShader();
+
+      const envScene = new THREE.Scene();
+      envScene.background = new THREE.Color(0x06100d);
+
+      // Primary overhead high-intensity studio softbox bank
+      const topSoftbox1 = new THREE.Mesh(
+        new THREE.PlaneGeometry(34, 6.5),
+        new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide })
+      );
+      topSoftbox1.position.set(0, 14, 3);
+      topSoftbox1.rotation.x = Math.PI / 2;
+      envScene.add(topSoftbox1);
+
+      // Secondary angled key diffuser strip
+      const topSoftbox2 = new THREE.Mesh(
+        new THREE.PlaneGeometry(30, 3.8),
+        new THREE.MeshBasicMaterial({ color: 0xfff8ee, side: THREE.DoubleSide })
+      );
+      topSoftbox2.position.set(-3, 10.5, 11);
+      topSoftbox2.lookAt(0, 0, 0);
+      envScene.add(topSoftbox2);
+
+      // Sharp high-contrast horizon specular strip for crisp metallic anisotropy
+      const horizonStrip = new THREE.Mesh(
+        new THREE.PlaneGeometry(42, 1.1),
+        new THREE.MeshBasicMaterial({ color: 0xfffdf9, side: THREE.DoubleSide })
+      );
+      horizonStrip.position.set(0, 2.5, 15);
+      horizonStrip.lookAt(0, 0, 0);
+      envScene.add(horizonStrip);
+
+      // Warm golden-bronze rim reflector panel (Right)
+      const warmPanel = new THREE.Mesh(
+        new THREE.PlaneGeometry(22, 16),
+        new THREE.MeshBasicMaterial({ color: 0xffd296, side: THREE.DoubleSide })
+      );
+      warmPanel.position.set(15, 4, -6);
+      warmPanel.lookAt(0, 0, 0);
+      envScene.add(warmPanel);
+
+      // Secondary warm accent strip (Back-Left)
+      const backRimStrip = new THREE.Mesh(
+        new THREE.PlaneGeometry(18, 4.5),
+        new THREE.MeshBasicMaterial({ color: 0xf3c68f, side: THREE.DoubleSide })
+      );
+      backRimStrip.position.set(-11, 7, -11);
+      backRimStrip.lookAt(0, 0, 0);
+      envScene.add(backRimStrip);
+
+      // Cool metallic-blue/silver fill reflector (Left)
+      const leftPanel = new THREE.Mesh(
+        new THREE.PlaneGeometry(20, 18),
+        new THREE.MeshBasicMaterial({ color: 0xdcebf2, side: THREE.DoubleSide })
+      );
+      leftPanel.position.set(-15, 3, 7);
+      leftPanel.lookAt(0, 0, 0);
+      envScene.add(leftPanel);
+
+      // Subtle emerald-forest studio floor bounce
+      const floorBounce = new THREE.Mesh(
+        new THREE.PlaneGeometry(36, 36),
+        new THREE.MeshBasicMaterial({ color: 0x1d4036, side: THREE.DoubleSide })
+      );
+      floorBounce.position.set(0, -11, 0);
+      floorBounce.rotation.x = -Math.PI / 2;
+      envScene.add(floorBounce);
+
+      const envRT = pmremGenerator.fromScene(envScene, 0.025);
+      pmremGenerator.dispose();
+      return envRT.texture;
+    }
+
+    window.onload = function () {
+      const container = document.getElementById('canvas-container');
+      if (!container) return;
+
+      const scene = new THREE.Scene();
+
+      // Zoomed-in FOV (26.5°) for crisp framing of the SO-101 assembly
+      const camera = new THREE.PerspectiveCamera(
+        26.5,
+        container.clientWidth / container.clientHeight,
+        0.1,
+        100
+      );
+      camera.position.set(0.0, -0.22, 12.0);
+
+      const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+      renderer.setSize(container.clientWidth, container.clientHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.38;
+      container.appendChild(renderer.domElement);
+
+      scene.environment = createPMREMStudioEnvironment(renderer);
+
+      // Multi-Light Studio Setup (7 Lights + HDRI Environment) for realistic metallic depth
+      const hemiLight = new THREE.HemisphereLight(0xf7f4ee, 0x0c221c, 0.72);
+      scene.add(hemiLight);
+
+      // 1. Main Key Directional Light with Soft Shadows
+      const keyLight = new THREE.DirectionalLight(0xfffcf5, 2.85);
+      keyLight.position.set(-5.5, 10.5, 9.5);
+      keyLight.castShadow = true;
+      keyLight.shadow.mapSize.width = 2048;
+      keyLight.shadow.mapSize.height = 2048;
+      keyLight.shadow.camera.near = 2;
+      keyLight.shadow.camera.far = 28;
+      const d = 6.5;
+      keyLight.shadow.camera.left = -d;
+      keyLight.shadow.camera.right = d;
+      keyLight.shadow.camera.top = d;
+      keyLight.shadow.camera.bottom = -d;
+      keyLight.shadow.bias = -0.0005;
+      scene.add(keyLight);
+
+      // 2. Warm Golden-Bronze Rim Light (Back-Right)
+      const warmRimLight = new THREE.DirectionalLight(0xf3c178, 2.35);
+      warmRimLight.position.set(8.5, 5.5, -7.0);
+      scene.add(warmRimLight);
+
+      // 3. Cool Anodized Fill Light (Front-Left)
+      const coolFillLight = new THREE.DirectionalLight(0xd4e9e2, 1.45);
+      coolFillLight.position.set(-8.0, -2.5, 6.5);
+      scene.add(coolFillLight);
+
+      // 4. Overhead Hair/Crown Kicker Light for metallic top bevels
+      const topKickerLight = new THREE.DirectionalLight(0xffffff, 1.65);
+      topKickerLight.position.set(0.5, 12.0, -2.5);
+      scene.add(topKickerLight);
+
+      // 5. Close-Range Wrist & Gripper Specular Point Light
+      const specularFillLight = new THREE.PointLight(0xfff6e8, 1.85, 25);
+      specularFillLight.position.set(1.8, 1.6, 7.5);
+      scene.add(specularFillLight);
+
+      // 6. Warm Under-Glow Point Light for Base & Standoffs
+      const underBounceLight = new THREE.PointLight(0xc8964e, 1.15, 18);
+      underBounceLight.position.set(-2.5, -3.5, 4.5);
+      scene.add(underBounceLight);
+
+      // ===================================================================
+      // IRONVIS SO-101 HIGH-LUSTER METALLIC PBR MATERIALS (#9c8983 Arm)
+      // ===================================================================
+      // 1. Ironvis | #9c8983 Metallic Arm Finish (Replaces previous off-white)
+      const linenEnamelMat = new THREE.MeshStandardMaterial({
+        color: 0x9c8983,
+        roughness: 0.18,
+        metalness: 0.90,
+        envMapIntensity: 1.85
+      });
+
+      // 2. Ironvis | Anodized Metallic Forest Green Trim (Servo bodies & bands)
+      const forestAnodizedMat = new THREE.MeshStandardMaterial({
+        color: 0x183a32,
+        roughness: 0.24,
+        metalness: 0.78,
+        envMapIntensity: 1.55
+      });
+
+      // 3. Ironvis | Metallic Satin Bronze (Standoffs, drive horns, spur gear, nuts & screws)
+      const satinBronzeMat = new THREE.MeshStandardMaterial({
+        color: 0xc8964e,
+        roughness: 0.14,
+        metalness: 0.95,
+        envMapIntensity: 1.95
+      });
+
+      // 4. Ironvis | Metallic Brushed Aluminum (Wrist coupler, gripper rail, nuts & screws)
+      const satinAluminumMat = new THREE.MeshStandardMaterial({
+        color: 0xd8dfe6,
+        roughness: 0.12,
+        metalness: 0.96,
+        envMapIntensity: 1.95
+      });
+
+      // 5. Ironvis | Gunmetal Metallic Polymer (Internal gearboxes, USB/DC ports, jaw racks)
+      const walnutPolymerMat = new THREE.MeshStandardMaterial({
+        color: 0x262c29,
+        roughness: 0.28,
+        metalness: 0.75,
+        envMapIntensity: 1.45
+      });
+
+      // 6. Ironvis | Moss PCB (Controller board & servo PCBs)
+      const mossPcbMat = new THREE.MeshStandardMaterial({
+        color: 0x5c6849,
+        roughness: 0.30,
+        metalness: 0.55,
+        envMapIntensity: 1.35
+      });
+
+      // Dark Shadow Cavity Material for recessed bores
+      const darkCavityMat = new THREE.MeshStandardMaterial({
+        color: 0x0b110f,
+        roughness: 0.65,
+        metalness: 0.45
+      });
+
+      function regMesh(mesh) {
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+        cadMeshes.push(mesh);
+        return mesh;
+      }
+
+      // Registry of all modular SO-101 sub-components that dynamically explode & rotate on scroll
+      const explodableItems = [];
+      function registerExplodable(obj3D, assembledPos, explodeDelta, rotDelta = null, power = 1.0, baseRot = null) {
+        obj3D.position.copy(assembledPos);
+        const initialRot = baseRot ? baseRot.clone() : obj3D.rotation.clone();
+        explodableItems.push({
+          obj: obj3D,
+          basePos: assembledPos.clone(),
+          deltaPos: explodeDelta.clone(),
+          baseRot: initialRot,
+          rotDelta: rotDelta ? rotDelta.clone() : null,
+          power
+        });
+      }
+
+      // Helper: Extrude a rounded stadium/capsule link or plate
+      function createCapsuleMesh(length, rLeft, rRight, depth, mat, bevel = 0.018) {
+        const shape = new THREE.Shape();
+        const halfL = length / 2;
+        shape.absarc(-halfL, 0, rLeft, Math.PI / 2, (Math.PI * 3) / 2, false);
+        shape.lineTo(halfL, -rRight);
+        shape.absarc(halfL, 0, rRight, -Math.PI / 2, Math.PI / 2, false);
+        shape.lineTo(-halfL, rLeft);
+
+        const geo = new THREE.ExtrudeGeometry(shape, {
+          depth,
+          bevelEnabled: true,
+          bevelThickness: bevel,
+          bevelSize: bevel,
+          bevelSegments: 3,
+          curveSegments: 32
+        });
+        geo.translate(0, 0, -depth / 2);
+        return regMesh(new THREE.Mesh(geo, mat));
+      }
+
+      // Helper: Build an SO-101 3-Piece Smart Servo Block (Linen Front Cover + Forest Green Body + Linen Rear Cover)
+      function createSO101ServoBlock(w = 0.56, h = 0.48, d = 0.46, hornAxis = 'Y') {
+        const servoGroup = new THREE.Group();
+
+        const frontCover = regMesh(new THREE.Mesh(new THREE.BoxGeometry(w * 0.30, h, d), linenEnamelMat));
+        frontCover.position.x = w * 0.35;
+        servoGroup.add(frontCover);
+
+        const greenBody = regMesh(new THREE.Mesh(new THREE.BoxGeometry(w * 0.42, h * 0.99, d * 0.99), forestAnodizedMat));
+        servoGroup.add(greenBody);
+
+        const rearCover = regMesh(new THREE.Mesh(new THREE.BoxGeometry(w * 0.30, h, d), linenEnamelMat));
+        rearCover.position.x = -w * 0.35;
+        servoGroup.add(rearCover);
+
+        // 4 Metallic Bronze & Aluminum Corner Bolts & Hex Nuts on the Servo Housing
+        [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([sy, sz], idx) => {
+          const fastenerMat = idx % 2 === 0 ? satinBronzeMat : satinAluminumMat;
+          const bolt = regMesh(new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, w * 1.04, 12), fastenerMat));
+          bolt.rotation.z = Math.PI / 2;
+          bolt.position.set(0, sy * (h * 0.38), sz * (d * 0.38));
+          servoGroup.add(bolt);
+
+          const hexNut = regMesh(new THREE.Mesh(new THREE.CylinderGeometry(0.036, 0.036, 0.03, 6), satinBronzeMat));
+          hexNut.rotation.z = Math.PI / 2;
+          hexNut.position.set(w * 0.52, sy * (h * 0.38), sz * (d * 0.38));
+          servoGroup.add(hexNut);
+        });
+
+        // Satin Bronze Drive Horn Spline Boss
+        const hornBoss = regMesh(new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.06, 24), satinBronzeMat));
+        if (hornAxis === 'Y') {
+          hornBoss.position.set(w * 0.12, h * 0.52, 0);
+        } else if (hornAxis === 'X') {
+          hornBoss.rotation.z = Math.PI / 2;
+          hornBoss.position.set(w * 0.52, 0, 0);
+        } else {
+          hornBoss.rotation.x = Math.PI / 2;
+          hornBoss.position.set(w * 0.12, 0, d * 0.52);
+        }
+        servoGroup.add(hornBoss);
+
+        return servoGroup;
+      }
+
+      // Helper: Create the SO-101 Circular Bolt Pattern Hub with Metallic Bronze & Aluminum Screws & Hex Nuts
+      function createSO101HubPattern(radius, zSign, boltCount = 6) {
+        const hub = new THREE.Group();
+
+        // Central recessed bore with Satin Bronze bearing ring + Brushed Aluminum inner race
+        const bore = regMesh(new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, 0.04, 24), darkCavityMat));
+        bore.rotation.x = Math.PI / 2;
+        hub.add(bore);
+
+        const bronzeRing = regMesh(new THREE.Mesh(new THREE.TorusGeometry(0.115, 0.018, 12, 28), satinBronzeMat));
+        bronzeRing.position.z = zSign * 0.018;
+        hub.add(bronzeRing);
+
+        const aluInnerCap = regMesh(new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.065, 0.05, 16), satinAluminumMat));
+        aluInnerCap.rotation.x = Math.PI / 2;
+        aluInnerCap.position.z = zSign * 0.01;
+        hub.add(aluInnerCap);
+
+        // Radial socket screws & alternating bronze/aluminum washers
+        for (let i = 0; i < boltCount; i++) {
+          const ang = (i / boltCount) * Math.PI * 2;
+          const bx = Math.cos(ang) * radius;
+          const by = Math.sin(ang) * radius;
+
+          const washerMat = i % 2 === 0 ? satinBronzeMat : satinAluminumMat;
+          const screwMat = i % 2 === 0 ? satinAluminumMat : satinBronzeMat;
+
+          const hexWasher = regMesh(new THREE.Mesh(new THREE.CylinderGeometry(0.038, 0.038, 0.04, 6), washerMat));
+          hexWasher.rotation.x = Math.PI / 2;
+          hexWasher.position.set(bx, by, zSign * 0.008);
+          hub.add(hexWasher);
+
+          const screw = regMesh(new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.065, 12), screwMat));
+          screw.rotation.x = Math.PI / 2;
+          screw.position.set(bx, by, zSign * 0.022);
+          hub.add(screw);
+        }
+        return hub;
+      }
+
+      // ===================================================================
+      // MASTER IRONVIS SO-101 HIERARCHY (Supports Downward Pose -> Rise + Explode)
+      // ===================================================================
+      const masterGroup = new THREE.Group();
+      // Pulled down into the open stage area so there is zero text overlap
+      masterGroup.position.set(-0.35, -1.25, 0);
+      masterGroup.rotation.y = -0.18;
+      masterGroup.rotation.x = 0.08;
+      scene.add(masterGroup);
+
+      // -------------------------------------------------------------------
+      // 01. BASE ENCLOSURE & BASE SERVO SUPPORT (Linen Enamel + 4 Base Screws)
+      // -------------------------------------------------------------------
+      const baseEnclosureGroup = new THREE.Group();
+      masterGroup.add(baseEnclosureGroup);
+      registerExplodable(
+        baseEnclosureGroup,
+        new THREE.Vector3(-1.55, -1.35, 0),
+        new THREE.Vector3(-0.20, -0.32, 0),
+        new THREE.Euler(0.04, -0.12, 0),
+        0.95
+      );
+
+      // Bottom flared circular skirt
+      const baseSkirt = regMesh(new THREE.Mesh(new THREE.CylinderGeometry(0.82, 0.88, 0.16, 48), linenEnamelMat));
+      baseSkirt.position.y = -0.32;
+      baseEnclosureGroup.add(baseSkirt);
+
+      // Main cylindrical pedestal body
+      const baseCylinder = regMesh(new THREE.Mesh(new THREE.CylinderGeometry(0.76, 0.80, 0.56, 48), linenEnamelMat));
+      baseCylinder.position.y = 0.02;
+      baseEnclosureGroup.add(baseCylinder);
+
+      // 4 Recessed Base Mounting Screw Pockets + Metallic Bronze Screws & Aluminum Washers
+      for (let i = 0; i < 4; i++) {
+        const ang = (i / 4) * Math.PI * 2 + Math.PI / 4;
+        const rx = Math.cos(ang) * 0.77;
+        const rz = Math.sin(ang) * 0.77;
+
+        const notch = regMesh(new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.28, 16), darkCavityMat));
+        notch.position.set(rx, -0.14, rz);
+        baseEnclosureGroup.add(notch);
+
+        const baseWasher = regMesh(new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.03, 6), satinAluminumMat));
+        baseWasher.position.set(rx, -0.25, rz);
+        baseEnclosureGroup.add(baseWasher);
+
+        const baseScrew = regMesh(new THREE.Mesh(new THREE.CylinderGeometry(0.038, 0.038, 0.16, 12), satinBronzeMat));
+        baseScrew.position.set(rx, -0.20, rz);
+        baseEnclosureGroup.add(baseScrew);
+      }
+
+      // Upper Base Servo Support Deck
+      const baseServoSupport = new THREE.Group();
+      baseEnclosureGroup.add(baseServoSupport);
+      registerExplodable(
+        baseServoSupport,
+        new THREE.Vector3(0.06, 0.52, 0),
+        new THREE.Vector3(-0.12, 0.16, 0),
+        new THREE.Euler(0, 0.08, 0),
+        0.95
+      );
+
+      const supportBody = createCapsuleMesh(0.72, 0.54, 0.48, 0.44, linenEnamelMat, 0.03);
+      supportBody.rotation.x = Math.PI / 2;
+      baseServoSupport.add(supportBody);
+
+      // Horizontal seam groove + Satin Bronze side retention pin
+      const supportSeam = regMesh(new THREE.Mesh(new THREE.BoxGeometry(1.42, 0.022, 0.96), darkCavityMat));
+      supportSeam.position.y = 0.02;
+      baseServoSupport.add(supportSeam);
+
+      const sideBronzePin = regMesh(new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 1.04, 16), satinBronzeMat));
+      sideBronzePin.rotation.x = Math.PI / 2;
+      sideBronzePin.position.set(-0.22, -0.06, 0);
+      baseServoSupport.add(sideBronzePin);
+
+      // -------------------------------------------------------------------
+      // 02. CONTROLLER PCB, MOUNTING PLATE & 4 SATIN BRONZE STANDOFFS (Left)
+      // -------------------------------------------------------------------
+      const controllerMountGroup = new THREE.Group();
+      baseServoSupport.add(controllerMountGroup);
+      registerExplodable(
+        controllerMountGroup,
+        new THREE.Vector3(-0.76, 0.02, 0),
+        new THREE.Vector3(-0.38, 0.04, 0),
+        new THREE.Euler(0.08, 0, -0.06),
+        1.0
+      );
+
+      const ctrlMountPlate = regMesh(new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.52, 0.68), forestAnodizedMat));
+      controllerMountGroup.add(ctrlMountPlate);
+
+      const ctrlLinenTrim = regMesh(new THREE.Mesh(new THREE.BoxGeometry(0.10, 0.56, 0.72), linenEnamelMat));
+      ctrlLinenTrim.position.x = 0.08;
+      controllerMountGroup.add(ctrlLinenTrim);
+
+      // 4 Satin Bronze Hex Standoffs (Bronze_Standoff_1..4)
+      const standoffsGroup = new THREE.Group();
+      controllerMountGroup.add(standoffsGroup);
+      registerExplodable(
+        standoffsGroup,
+        new THREE.Vector3(-0.14, 0, 0),
+        new THREE.Vector3(-0.28, 0, 0),
+        new THREE.Euler(0.25, 0, 0),
+        1.05
+      );
+
+      [[-0.19, -0.24], [0.19, -0.24], [-0.19, 0.24], [0.19, 0.24]].forEach(([sy, sz]) => {
+        const standoff = regMesh(new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.16, 6), satinBronzeMat));
+        standoff.rotation.z = Math.PI / 2;
+        standoff.position.set(0, sy, sz);
+        standoffsGroup.add(standoff);
+      });
+
+      // Moss Green Controller PCB Assembly (PCB_Board, Ports 1-2, DC1, C1-C8, D1-D4, U1, M1, Q1, Screws 1-4)
+      const pcbAssemblyGroup = new THREE.Group();
+      controllerMountGroup.add(pcbAssemblyGroup);
+      registerExplodable(
+        pcbAssemblyGroup,
+        new THREE.Vector3(-0.25, 0, 0),
+        new THREE.Vector3(-0.62, 0.05, 0.12),
+        new THREE.Euler(-0.14, 0.22, 0.08),
+        1.12
+      );
+
+      const pcbBoard = regMesh(new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.50, 0.64), mossPcbMat));
+      pcbAssemblyGroup.add(pcbBoard);
+
+      // Controller Port 1 & Port 2 + DC1 Jack
+      const port1 = regMesh(new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.14, 0.16), walnutPolymerMat));
+      port1.position.set(-0.06, -0.10, 0.20);
+      pcbAssemblyGroup.add(port1);
+
+      const port2 = regMesh(new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.12, 0.14), satinAluminumMat));
+      port2.position.set(-0.05, 0.12, 0.20);
+      pcbAssemblyGroup.add(port2);
+
+      const dcJack = regMesh(new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.15, 0.16), walnutPolymerMat));
+      dcJack.position.set(-0.06, -0.12, -0.18);
+      pcbAssemblyGroup.add(dcJack);
+
+      // SMD IC U1 & Capacitors
+      const icU1 = regMesh(new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.14, 0.14), walnutPolymerMat));
+      icU1.position.set(-0.03, 0.02, 0.0);
+      pcbAssemblyGroup.add(icU1);
+
+      for (let c = 0; c < 6; c++) {
+        const cap = regMesh(new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.028, 0.05, 12), satinAluminumMat));
+        cap.rotation.z = Math.PI / 2;
+        cap.position.set(-0.04, -0.16 + c * 0.065, -0.02);
+        pcbAssemblyGroup.add(cap);
+      }
+
+      // 4 Controller Mounting Screws (Controller_Screw_1..4) — Explode further left
+      const ctrlScrewsGroup = new THREE.Group();
+      pcbAssemblyGroup.add(ctrlScrewsGroup);
+      registerExplodable(
+        ctrlScrewsGroup,
+        new THREE.Vector3(-0.05, 0, 0),
+        new THREE.Vector3(-0.34, 0, 0),
+        new THREE.Euler(0.4, 0, 0),
+        1.18
+      );
+
+      [[-0.19, -0.24], [0.19, -0.24], [-0.19, 0.24], [0.19, 0.24]].forEach(([sy, sz], idx) => {
+        const screwMat = idx % 2 === 0 ? satinBronzeMat : satinAluminumMat;
+        const screw = regMesh(new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.028, 0.08, 12), screwMat));
+        screw.rotation.z = Math.PI / 2;
+        screw.position.set(0, sy, sz);
+        ctrlScrewsGroup.add(screw);
+      });
+
+      // -------------------------------------------------------------------
+      // 03. J1 BASE YAW SERVO (Inside Base Support)
+      // -------------------------------------------------------------------
+      const j1YawServoGroup = new THREE.Group();
+      baseServoSupport.add(j1YawServoGroup);
+      registerExplodable(
+        j1YawServoGroup,
+        new THREE.Vector3(-0.12, 0.18, 0),
+        new THREE.Vector3(-0.15, 0.34, 0),
+        new THREE.Euler(0, 0.25, 0),
+        1.0
+      );
+
+      const j1ServoUnit = createSO101ServoBlock(0.54, 0.44, 0.44, 'Y');
+      j1YawServoGroup.add(j1ServoUnit);
+
+      // -------------------------------------------------------------------
+      // 04. SHOULDER YAW BRACKET & 05. J2 SHOULDER SERVO + MOUNT
+      // -------------------------------------------------------------------
+      const shoulderYawGroup = new THREE.Group();
+      masterGroup.add(shoulderYawGroup);
+      registerExplodable(
+        shoulderYawGroup,
+        new THREE.Vector3(-0.88, -0.58, 0),
+        new THREE.Vector3(0.14, -0.14, 0),
+        new THREE.Euler(0, -0.18, 0),
+        0.95
+      );
+
+      // Lower C-shaped Shoulder Yaw Bracket cradling the base
+      const yawBracketBottom = createCapsuleMesh(0.48, 0.34, 0.34, 0.16, linenEnamelMat, 0.02);
+      yawBracketBottom.rotation.x = Math.PI / 2;
+      yawBracketBottom.position.set(-0.18, -0.32, 0);
+      shoulderYawGroup.add(yawBracketBottom);
+
+      const yawBracketColumn = regMesh(new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.62, 0.64), linenEnamelMat));
+      yawBracketColumn.position.set(0.06, 0.02, 0);
+      shoulderYawGroup.add(yawBracketColumn);
+
+      // 05. J2 Shoulder Servo & Mount Turret
+      const j2MountGroup = new THREE.Group();
+      shoulderYawGroup.add(j2MountGroup);
+      registerExplodable(
+        j2MountGroup,
+        new THREE.Vector3(0.04, 0.56, 0),
+        new THREE.Vector3(0.18, 0.14, 0),
+        new THREE.Euler(0, 0.15, -0.06),
+        1.0
+      );
+
+      const j2TurretShell = regMesh(new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.64, 0.68), linenEnamelMat));
+      j2MountGroup.add(j2TurretShell);
+
+      // J2 Internal Servo Block
+      const j2ServoUnit = createSO101ServoBlock(0.52, 0.48, 0.52, 'Z');
+      j2ServoUnit.position.set(0, 0.12, 0);
+      j2MountGroup.add(j2ServoUnit);
+
+      // Circular Bolt Hub on front & back of J2 Shoulder Mount
+      [1, -1].forEach((zSign) => {
+        const j2Hub = createSO101HubPattern(0.19, zSign, 6);
+        j2Hub.position.set(0.0, 0.24, zSign * 0.345);
+        j2MountGroup.add(j2Hub);
+      });
+
+      // ===================================================================
+      // ARTICULATED J2 SHOULDER PIVOT (Rotates Upper Arm, Forearm & Wrist)
+      // ===================================================================
+      const j2ShoulderPivot = new THREE.Group();
+      j2ShoulderPivot.position.set(-0.84, 0.22, 0);
+      masterGroup.add(j2ShoulderPivot);
+
+      // -------------------------------------------------------------------
+      // 06. UPPER ARM LINK (Angled Up-and-Left from J2 to J3)
+      // -------------------------------------------------------------------
+      const upperArmGroup = new THREE.Group();
+      j2ShoulderPivot.add(upperArmGroup);
+
+      // J2 is at (0,0,0) in j2ShoulderPivot; J3 is at (-1.18, 1.32, 0)
+      const upperArmDX = -1.18;
+      const upperArmDY = 1.32;
+      const upperArmLen = Math.hypot(upperArmDX, upperArmDY);
+      const upperArmAngle = Math.atan2(upperArmDY, upperArmDX);
+
+      registerExplodable(
+        upperArmGroup,
+        new THREE.Vector3(upperArmDX / 2, upperArmDY / 2, 0),
+        new THREE.Vector3(-0.26, 0.16, 0.14),
+        new THREE.Euler(0.08, -0.14, 0.06),
+        1.0,
+        new THREE.Euler(0, 0, upperArmAngle)
+      );
+
+      // Main sculpted Off-White Linen Enamel Upper Arm Beam
+      const upperArmBody = createCapsuleMesh(upperArmLen, 0.34, 0.32, 0.54, linenEnamelMat, 0.025);
+      upperArmGroup.add(upperArmBody);
+
+      // Recessed side pockets with diagonal reinforcement ribs (matching SO-101 CAD)
+      [1, -1].forEach((zSign) => {
+        const pocket = createCapsuleMesh(upperArmLen * 0.64, 0.17, 0.17, 0.03, darkCavityMat, 0.005);
+        pocket.position.set(0, 0, zSign * 0.265);
+        upperArmGroup.add(pocket);
+
+        // Internal structural rib + metallic bronze/aluminum boss in the middle of the link
+        const midHub = createSO101HubPattern(0.14, zSign, 6);
+        midHub.position.set(0, 0, zSign * 0.27);
+        upperArmGroup.add(midHub);
+      });
+
+      // ===================================================================
+      // ARTICULATED J3 ELBOW PIVOT (At top-left of Upper Arm: -1.18, 1.32, 0)
+      // ===================================================================
+      const j3ElbowPivot = new THREE.Group();
+      j3ElbowPivot.position.set(upperArmDX, upperArmDY, 0);
+      j2ShoulderPivot.add(j3ElbowPivot);
+
+      // -------------------------------------------------------------------
+      // 07. J3 ELBOW SERVO & 08. FOREARM LINK (Angled from J3 to J4)
+      // -------------------------------------------------------------------
+      const j3ServoGroup = new THREE.Group();
+      j3ElbowPivot.add(j3ServoGroup);
+      registerExplodable(
+        j3ServoGroup,
+        new THREE.Vector3(0, 0, 0),
+        new THREE.Vector3(-0.34, 0.28, -0.18),
+        new THREE.Euler(-0.16, 0.22, 0.12),
+        1.05
+      );
+
+      const j3ServoBlock = createSO101ServoBlock(0.50, 0.44, 0.48, 'Z');
+      j3ServoGroup.add(j3ServoBlock);
+
+      [1, -1].forEach((zSign) => {
+        const j3Hub = createSO101HubPattern(0.18, zSign, 6);
+        j3Hub.position.set(0, 0, zSign * 0.26);
+        j3ServoGroup.add(j3Hub);
+      });
+
+      // 08. Forearm Link (Extends from J3 (0,0) to J4 (1.55, 0.26))
+      const forearmGroup = new THREE.Group();
+      j3ElbowPivot.add(forearmGroup);
+
+      const forearmDX = 1.55;
+      const forearmDY = 0.26;
+      const forearmLen = Math.hypot(forearmDX, forearmDY);
+      const forearmAngle = Math.atan2(forearmDY, forearmDX);
+
+      registerExplodable(
+        forearmGroup,
+        new THREE.Vector3(forearmDX / 2, forearmDY / 2, 0),
+        new THREE.Vector3(-0.08, 0.34, 0.12),
+        new THREE.Euler(0.12, 0.10, -0.05),
+        1.02,
+        new THREE.Euler(0, 0, forearmAngle)
+      );
+
+      const forearmBeam = createCapsuleMesh(forearmLen, 0.30, 0.31, 0.52, linenEnamelMat, 0.022);
+      forearmGroup.add(forearmBeam);
+
+      // Recessed side slot along forearm link
+      [1, -1].forEach((zSign) => {
+        const slot = createCapsuleMesh(forearmLen * 0.56, 0.12, 0.12, 0.03, darkCavityMat, 0.005);
+        slot.position.set(-0.08, 0, zSign * 0.255);
+        forearmGroup.add(slot);
+      });
+
+      // -------------------------------------------------------------------
+      // 09. WRIST PITCH SERVO MOUNT (Collar on Forearm before J4 Yoke)
+      // -------------------------------------------------------------------
+      const wristPitchMountGroup = new THREE.Group();
+      j3ElbowPivot.add(wristPitchMountGroup);
+      registerExplodable(
+        wristPitchMountGroup,
+        new THREE.Vector3(1.18, 0.20, 0),
+        new THREE.Vector3(0.06, 0.46, -0.16),
+        new THREE.Euler(-0.18, 0.14, 0.08),
+        1.06
+      );
+
+      const pitchMountCollar = regMesh(new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.64, 0.58), linenEnamelMat));
+      pitchMountCollar.rotation.z = forearmAngle;
+      wristPitchMountGroup.add(pitchMountCollar);
+
+      // Metallic Bronze & Aluminum Screws on the Wrist Pitch Servo Mount Collar
+      [-0.18, 0.18].forEach((py, idx) => {
+        const bolt = regMesh(new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.62, 12), idx === 0 ? satinBronzeMat : satinAluminumMat));
+        bolt.rotation.x = Math.PI / 2;
+        bolt.position.set(0, py, 0);
+        wristPitchMountGroup.add(bolt);
+      });
+
+      // ===================================================================
+      // ARTICULATED J4 WRIST PITCH PIVOT (Holds Yoke & Entire Exploding Gripper)
+      // When in downward pose (scroll = 0), this pivot pitches downward so the
+      // wrist & gripper hang down; as the user scrolls, it rises to horizontal
+      // while all 8 wrist/gripper sub-assemblies explode outward!
+      // ===================================================================
+      const j4WristPivot = new THREE.Group();
+      j4WristPivot.position.set(forearmDX, forearmDY, 0);
+      j3ElbowPivot.add(j4WristPivot);
+
+      // -------------------------------------------------------------------
+      // 10. J4 WRIST PITCH SERVO & U-SHAPED YOKE
+      // -------------------------------------------------------------------
+      const j4YokeAndServoGroup = new THREE.Group();
+      j4WristPivot.add(j4YokeAndServoGroup);
+      registerExplodable(
+        j4YokeAndServoGroup,
+        new THREE.Vector3(0.32, 0.0, 0),
+        new THREE.Vector3(0.24, 0.22, 0),
+        new THREE.Euler(0.10, -0.15, 0.05),
+        1.02
+      );
+
+      // J4 Servo Block at the base of the yoke
+      const j4ServoUnit = createSO101ServoBlock(0.48, 0.44, 0.46, 'Z');
+      j4ServoUnit.position.set(-0.22, 0, 0);
+      j4YokeAndServoGroup.add(j4ServoUnit);
+
+      [1, -1].forEach((zSign) => {
+        const j4Hub = createSO101HubPattern(0.16, zSign, 6);
+        j4Hub.position.set(-0.22, 0, zSign * 0.25);
+        j4YokeAndServoGroup.add(j4Hub);
+      });
+
+      // Sculpted Off-White U-Shaped Wrist Pitch Yoke Arms (Upper & Lower fork arms)
+      [1, -1].forEach((ySign) => {
+        const yokeArm = regMesh(new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.13, 0.52), linenEnamelMat));
+        yokeArm.position.set(0.18, ySign * 0.22, 0);
+        j4YokeAndServoGroup.add(yokeArm);
+      });
+
+      // Front Clevis Rings of the U-Shaped Yoke
+      const yokeFrontBridge = regMesh(new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.56, 0.52), linenEnamelMat));
+      yokeFrontBridge.position.set(0.48, 0, 0);
+      j4YokeAndServoGroup.add(yokeFrontBridge);
+
+      const yokeWindowCutout = regMesh(new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.28, 0.54), darkCavityMat));
+      yokeWindowCutout.position.set(0.22, 0, 0);
+      j4YokeAndServoGroup.add(yokeWindowCutout);
+
+      // -------------------------------------------------------------------
+      // 11. J5 WRIST ROLL SERVO (Forest Green Body + Off-White Front/Rear Covers)
+      // -------------------------------------------------------------------
+      const j5WristRollServoGroup = new THREE.Group();
+      j4WristPivot.add(j5WristRollServoGroup);
+      registerExplodable(
+        j5WristRollServoGroup,
+        new THREE.Vector3(0.62, 0.0, 0),
+        new THREE.Vector3(0.78, 0.14, 0.16),
+        new THREE.Euler(0.28, 0.18, -0.08),
+        1.05
+      );
+
+      const j5ServoUnit = createSO101ServoBlock(0.58, 0.48, 0.46, 'X');
+      j5WristRollServoGroup.add(j5ServoUnit);
+
+      // -------------------------------------------------------------------
+      // 12. BRONZE WRIST DRIVE HORN (Satin Bronze Flanged Disc)
+      // -------------------------------------------------------------------
+      const wristDriveHornGroup = new THREE.Group();
+      j4WristPivot.add(wristDriveHornGroup);
+      registerExplodable(
+        wristDriveHornGroup,
+        new THREE.Vector3(0.94, 0.0, 0),
+        new THREE.Vector3(1.38, -0.10, -0.14),
+        new THREE.Euler(0.85, 0.24, -0.15),
+        1.08
+      );
+
+      const bronzeHornDisc = regMesh(new THREE.Mesh(new THREE.CylinderGeometry(0.20, 0.20, 0.06, 32), satinBronzeMat));
+      bronzeHornDisc.rotation.z = Math.PI / 2;
+      wristDriveHornGroup.add(bronzeHornDisc);
+
+      const bronzeHornBoss = regMesh(new THREE.Mesh(new THREE.CylinderGeometry(0.10, 0.10, 0.10, 24), satinBronzeMat));
+      bronzeHornBoss.rotation.z = Math.PI / 2;
+      bronzeHornBoss.position.x = -0.03;
+      wristDriveHornGroup.add(bronzeHornBoss);
+
+      for (let i = 0; i < 6; i++) {
+        const a = (i / 6) * Math.PI * 2;
+        const hornScrew = regMesh(new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.08, 10), satinAluminumMat));
+        hornScrew.rotation.z = Math.PI / 2;
+        hornScrew.position.set(0.01, Math.cos(a) * 0.14, Math.sin(a) * 0.14);
+        wristDriveHornGroup.add(hornScrew);
+      }
+
+      // -------------------------------------------------------------------
+      // 13. ALUMINUM WRIST COUPLER (Stepped Brushed Aluminum Cylinder)
+      // -------------------------------------------------------------------
+      const wristCouplerGroup = new THREE.Group();
+      j4WristPivot.add(wristCouplerGroup);
+      registerExplodable(
+        wristCouplerGroup,
+        new THREE.Vector3(1.08, 0.0, 0),
+        new THREE.Vector3(1.92, 0.18, 0.18),
+        new THREE.Euler(-0.65, -0.28, 0.18),
+        1.10
+      );
+
+      const couplerFlange = regMesh(new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.12, 36), satinAluminumMat));
+      couplerFlange.rotation.z = Math.PI / 2;
+      wristCouplerGroup.add(couplerFlange);
+
+      const couplerNeck = regMesh(new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.14, 32), satinAluminumMat));
+      couplerNeck.rotation.z = Math.PI / 2;
+      couplerNeck.position.x = -0.09;
+      wristCouplerGroup.add(couplerNeck);
+
+      for (let i = 0; i < 6; i++) {
+        const a = (i / 6) * Math.PI * 2 + Math.PI / 6;
+        const couplerBolt = regMesh(new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.14, 10), satinBronzeMat));
+        couplerBolt.rotation.z = Math.PI / 2;
+        couplerBolt.position.set(0.01, Math.cos(a) * 0.21, Math.sin(a) * 0.21);
+        wristCouplerGroup.add(couplerBolt);
+      }
+
+      // -------------------------------------------------------------------
+      // 14. GRIPPER MOUNT PLATE & SCREWS A/B (Tapered Off-White Housing)
+      // -------------------------------------------------------------------
+      const gripperMountPlateGroup = new THREE.Group();
+      j4WristPivot.add(gripperMountPlateGroup);
+      registerExplodable(
+        gripperMountPlateGroup,
+        new THREE.Vector3(1.38, 0.0, 0),
+        new THREE.Vector3(2.54, -0.14, -0.12),
+        new THREE.Euler(0.32, 0.22, -0.14),
+        1.12
+      );
+
+      const mountBell = regMesh(new THREE.Mesh(new THREE.CylinderGeometry(0.30, 0.36, 0.48, 4), linenEnamelMat));
+      mountBell.rotation.z = Math.PI / 2;
+      mountBell.rotation.x = Math.PI / 4;
+      gripperMountPlateGroup.add(mountBell);
+
+      // 2 Long Bronze Gripper Mount Screws (Gripper_Mount_Screw_A & B)
+      [-0.14, 0.14].forEach((sy, idx) => {
+        const mountScrew = regMesh(new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.56, 12), idx === 0 ? satinBronzeMat : satinAluminumMat));
+        mountScrew.rotation.z = Math.PI / 2;
+        mountScrew.position.set(0.08, sy, 0.16);
+        gripperMountPlateGroup.add(mountScrew);
+      });
+
+      // -------------------------------------------------------------------
+      // 15. GRIPPER MICRO SERVO (Forest Green Micro Servo + Mounting Ears)
+      // -------------------------------------------------------------------
+      const microServoGroup = new THREE.Group();
+      j4WristPivot.add(microServoGroup);
+      registerExplodable(
+        microServoGroup,
+        new THREE.Vector3(1.62, -0.02, 0),
+        new THREE.Vector3(3.22, 0.22, 0.20),
+        new THREE.Euler(-0.38, -0.25, 0.16),
+        1.15
+      );
+
+      const microBody = regMesh(new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.32, 0.28), forestAnodizedMat));
+      microServoGroup.add(microBody);
+
+      const microEars = regMesh(new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.44, 0.30), forestAnodizedMat));
+      microEars.position.x = 0.08;
+      microServoGroup.add(microEars);
+
+      const microNose = regMesh(new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.12, 24), linenEnamelMat));
+      microNose.rotation.z = Math.PI / 2;
+      microNose.position.set(0.24, 0.05, 0);
+      microServoGroup.add(microNose);
+
+      // Micro Servo Markings (Subtle Brushed Aluminum Spec Plate)
+      const microPlate = regMesh(new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.16, 0.29), satinAluminumMat));
+      microServoGroup.add(microPlate);
+
+      // -------------------------------------------------------------------
+      // 16. SERVO HORN, SPUR GEAR PINION & PINION SCREW (Satin Bronze Gear)
+      // -------------------------------------------------------------------
+      const spurPinionGroup = new THREE.Group();
+      j4WristPivot.add(spurPinionGroup);
+      registerExplodable(
+        spurPinionGroup,
+        new THREE.Vector3(1.86, 0.02, 0),
+        new THREE.Vector3(3.84, -0.16, -0.18),
+        new THREE.Euler(1.35, 0.35, -0.22),
+        1.18
+      );
+
+      // Toothed Satin Bronze Spur Gear
+      const gearCore = regMesh(new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.11, 24), satinBronzeMat));
+      gearCore.rotation.z = Math.PI / 2;
+      spurPinionGroup.add(gearCore);
+
+      for (let t = 0; t < 12; t++) {
+        const a = (t / 12) * Math.PI * 2;
+        const tooth = regMesh(new THREE.Mesh(new THREE.BoxGeometry(0.105, 0.036, 0.045), satinBronzeMat));
+        tooth.position.set(0, Math.cos(a) * 0.15, Math.sin(a) * 0.15);
+        tooth.rotation.x = a;
+        spurPinionGroup.add(tooth);
+      }
+
+      // Pinion Center Screw (Brushed Aluminum)
+      const pinionScrew = regMesh(new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.18, 12), satinAluminumMat));
+      pinionScrew.rotation.z = Math.PI / 2;
+      pinionScrew.position.x = 0.06;
+      spurPinionGroup.add(pinionScrew);
+
+      // -------------------------------------------------------------------
+      // 17. GRIPPER RAIL (Forest Green Frame + Brushed Aluminum Linear Rail)
+      // -------------------------------------------------------------------
+      const gripperRailGroup = new THREE.Group();
+      j4WristPivot.add(gripperRailGroup);
+      registerExplodable(
+        gripperRailGroup,
+        new THREE.Vector3(2.08, 0.0, 0),
+        new THREE.Vector3(4.42, 0.08, 0.08),
+        new THREE.Euler(-0.24, 0.20, 0.08),
+        1.20
+      );
+
+      const railForestBack = regMesh(new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.62, 0.50), forestAnodizedMat));
+      railForestBack.position.x = -0.06;
+      gripperRailGroup.add(railForestBack);
+
+      const railLinenFrame = regMesh(new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.64, 0.52), linenEnamelMat));
+      railLinenFrame.position.x = 0.10;
+      gripperRailGroup.add(railLinenFrame);
+
+      const aluminumGuideBar = regMesh(new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.72, 0.24), satinAluminumMat));
+      aluminumGuideBar.position.x = 0.20;
+      gripperRailGroup.add(aluminumGuideBar);
+
+      // -------------------------------------------------------------------
+      // 18. PARALLEL JAW RACKS, TIPS & 4 JAW SCREWS (Jaw_Positive & Jaw_Negative)
+      // -------------------------------------------------------------------
+      function createSO101GripperJaw(ySign) {
+        const jawGroup = new THREE.Group();
+
+        // Toothed Walnut/Bronze Rack Slider Bar
+        const rackBar = regMesh(new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.36, 0.14), walnutPolymerMat));
+        rackBar.position.set(-0.08, -ySign * 0.10, 0);
+        jawGroup.add(rackBar);
+
+        // Sculpted Off-White Linen Enamel Jaw Finger Tip
+        const jawBase = regMesh(new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.26, 0.34), linenEnamelMat));
+        jawGroup.add(jawBase);
+
+        const jawFingerTip = regMesh(new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.16, 0.30), linenEnamelMat));
+        jawFingerTip.position.set(0.30, -ySign * 0.04, 0);
+        jawGroup.add(jawFingerTip);
+
+        // Gripper Pad Inlay (Satin Bronze gripping pad)
+        const gripPad = regMesh(new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.028, 0.26), satinBronzeMat));
+        gripPad.position.set(0.32, -ySign * 0.12, 0);
+        jawGroup.add(gripPad);
+
+        // 2 Metallic Jaw Mounting Screws & Hex Nuts per Jaw (Jaw_Screw_1..4)
+        [-0.06, 0.08].forEach((sx, idx) => {
+          const screw = regMesh(new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.38, 12), idx === 0 ? satinBronzeMat : satinAluminumMat));
+          screw.rotation.x = Math.PI / 2;
+          screw.position.set(sx, 0.0, 0);
+          jawGroup.add(screw);
+
+          const nut = regMesh(new THREE.Mesh(new THREE.CylinderGeometry(0.042, 0.042, 0.04, 6), satinBronzeMat));
+          nut.rotation.x = Math.PI / 2;
+          nut.position.set(sx, 0.0, 0.18);
+          jawGroup.add(nut);
+        });
+
+        return jawGroup;
+      }
+
+      const jawUpperGroup = createSO101GripperJaw(1);
+      const jawLowerGroup = createSO101GripperJaw(-1);
+      j4WristPivot.add(jawUpperGroup, jawLowerGroup);
+
+      registerExplodable(
+        jawUpperGroup,
+        new THREE.Vector3(2.34, 0.20, 0),
+        new THREE.Vector3(5.05, 0.56, 0.22),
+        new THREE.Euler(-0.28, 0.24, 0.20),
+        1.24
+      );
+
+      registerExplodable(
+        jawLowerGroup,
+        new THREE.Vector3(2.34, -0.20, 0),
+        new THREE.Vector3(5.05, -0.56, -0.22),
+        new THREE.Euler(0.28, -0.24, -0.20),
+        1.24
+      );
+
+      // -------------------------------------------------------------------
+      // DASHED CAD EXPLOSION AXIS LINE THROUGH WRIST & GRIPPER
+      // -------------------------------------------------------------------
+      const cadAxisMat = new THREE.LineDashedMaterial({
+        color: 0xc8964e,
+        dashSize: 0.14,
+        gapSize: 0.08,
+        transparent: true,
+        opacity: 0.65
+      });
+
+      const wristAxisLine = new THREE.Line(
+        new THREE.BufferGeometry().setFromPoints([
+          new THREE.Vector3(0.2, 0, 0),
+          new THREE.Vector3(7.6, 0, 0)
+        ]),
+        cadAxisMat
+      );
+      wristAxisLine.computeLineDistances();
+      j4WristPivot.add(wristAxisLine);
+
+      // ===================================================================
+      // 18 FLOATING MICRO-LABELS & SVG LEADER LINES (EXPLODED VIEW)
+      // ===================================================================
+      const microLabelsLayer = document.getElementById('so101-micro-labels-layer');
+      const leaderSvg = document.getElementById('so101-leader-svg');
+      const badgesContainer = document.getElementById('so101-badges-container');
+
+      const partCalloutSpecs = [
+        { id: '01', name: 'Base Enclosure', target: baseEnclosureGroup, localOffset: new THREE.Vector3(0, -0.1, 0.4), dx: -52, dy: 34 },
+        { id: '02', name: 'Controller PCB', target: pcbAssemblyGroup, localOffset: new THREE.Vector3(0, 0.1, 0), dx: -68, dy: -26 },
+        { id: '03', name: 'J1 Base Yaw Servo', target: j1YawServoGroup, localOffset: new THREE.Vector3(0, 0.2, 0), dx: -54, dy: -36 },
+        { id: '04', name: 'Shoulder Yaw Bracket', target: shoulderYawGroup, localOffset: new THREE.Vector3(0.2, -0.1, 0), dx: 64, dy: 30 },
+        { id: '05', name: 'J2 Shoulder Servo', target: j2MountGroup, localOffset: new THREE.Vector3(0.2, 0.2, 0), dx: 68, dy: -16 },
+        { id: '06', name: 'Upper Arm Link', target: upperArmGroup, localOffset: new THREE.Vector3(0, 0, 0), dx: -68, dy: 22 },
+        { id: '07', name: 'J3 Elbow Servo', target: j3ServoGroup, localOffset: new THREE.Vector3(-0.1, 0.1, 0), dx: -62, dy: -30 },
+        { id: '08', name: 'Forearm Link', target: forearmGroup, localOffset: new THREE.Vector3(0, 0.15, 0), dx: -24, dy: -42 },
+        { id: '09', name: 'Wrist Pitch Mount', target: wristPitchMountGroup, localOffset: new THREE.Vector3(0, 0.25, 0), dx: -14, dy: -46 },
+        { id: '10', name: 'J4 Pitch Servo & Yoke', target: j4YokeAndServoGroup, localOffset: new THREE.Vector3(0.15, 0.22, 0), dx: 12, dy: -48 },
+        { id: '11', name: 'J5 Wrist Roll Servo', target: j5WristRollServoGroup, localOffset: new THREE.Vector3(0, 0.24, 0), dx: 10, dy: -44 },
+        { id: '12', name: 'Bronze Drive Horn', target: wristDriveHornGroup, localOffset: new THREE.Vector3(0, -0.18, 0), dx: -8, dy: 42 },
+        { id: '13', name: 'Aluminum Coupler', target: wristCouplerGroup, localOffset: new THREE.Vector3(0, 0.24, 0), dx: 8, dy: -44 },
+        { id: '14', name: 'Gripper Mount Plate', target: gripperMountPlateGroup, localOffset: new THREE.Vector3(0, -0.26, 0), dx: 0, dy: 44 },
+        { id: '15', name: 'Gripper Micro Servo', target: microServoGroup, localOffset: new THREE.Vector3(0, 0.22, 0), dx: 12, dy: -42 },
+        { id: '16', name: 'Spur Pinion & Horn', target: spurPinionGroup, localOffset: new THREE.Vector3(0, -0.16, 0), dx: 8, dy: 42 },
+        { id: '17', name: 'Gripper Rail', target: gripperRailGroup, localOffset: new THREE.Vector3(0, -0.32, 0), dx: 16, dy: 40 },
+        { id: '18', name: 'Jaw Racks & Tips', target: jawUpperGroup, localOffset: new THREE.Vector3(0.2, 0.14, 0), dx: 42, dy: -32 }
+      ];
+
+      const partCalloutNodes = partCalloutSpecs.map((spec) => {
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('stroke', 'rgba(203, 165, 112, 0.48)');
+        line.setAttribute('stroke-width', '0.75');
+        leaderSvg.appendChild(line);
+
+        const dot = document.createElement('div');
+        dot.className = 'part-anchor-dot';
+        badgesContainer.appendChild(dot);
+
+        const badge = document.createElement('div');
+        badge.className = 'part-floating-badge';
+        badge.innerHTML = `<span class="text-brass font-semibold mr-1">${spec.id}</span><span>${spec.name}</span>`;
+        badgesContainer.appendChild(badge);
+
+        return { spec, line, dot, badge };
+      });
+
+      const projVec = new THREE.Vector3();
+      function updateMicroLabels(explodeVal) {
+        if (!microLabelsLayer) return;
+        const alpha = Math.min(1, Math.max(0, (explodeVal - 0.35) / 0.45));
+        microLabelsLayer.style.opacity = alpha.toFixed(3);
+        if (alpha <= 0.01) return;
+
+        const cw = container.clientWidth;
+        const ch = container.clientHeight;
+        const isMobileView = cw < 640;
+        const offsetScale = isMobileView ? 0.56 : 1.0;
+        const marginX = isMobileView ? 32 : 48;
+        const marginTop = isMobileView ? 128 : 24;
+        const marginBottom = isMobileView ? 78 : 24;
+
+        partCalloutNodes.forEach(({ spec, line, dot, badge }) => {
+          projVec.copy(spec.localOffset);
+          spec.target.localToWorld(projVec);
+          projVec.project(camera);
+
+          if (projVec.z > 1) {
+            badge.style.opacity = '0';
+            dot.style.opacity = '0';
+            line.style.opacity = '0';
+            return;
+          }
+
+          const ax = (projVec.x * 0.5 + 0.5) * cw;
+          const ay = (-(projVec.y * 0.5) + 0.5) * ch;
+          const lx = Math.min(cw - marginX, Math.max(marginX, ax + spec.dx * offsetScale));
+          const ly = Math.min(ch - marginBottom, Math.max(marginTop, ay + spec.dy * offsetScale));
+
+          dot.style.left = `${ax.toFixed(1)}px`;
+          dot.style.top = `${ay.toFixed(1)}px`;
+          dot.style.opacity = '1';
+
+          badge.style.left = `${lx.toFixed(1)}px`;
+          badge.style.top = `${ly.toFixed(1)}px`;
+          badge.style.opacity = '1';
+
+          line.setAttribute('x1', ax.toFixed(1));
+          line.setAttribute('y1', ay.toFixed(1));
+          line.setAttribute('x2', lx.toFixed(1));
+          line.setAttribute('y2', ly.toFixed(1));
+          line.style.opacity = '1';
+        });
+      }
+
+      // ===================================================================
+      // SCROLL PROGRESS LOGIC (ASSEMBLE 0% <-> EXPLODED VIEW 100%)
+      // Starts in Downward Assembled Pose -> Rises & Dynamically Explodes on Scroll
+      // ===================================================================
+      const scrollBarFill = document.getElementById('scroll-bar-fill');
+      const scrollPctLabel = document.getElementById('scroll-pct-label');
+      const btnAssemble = document.getElementById('btn-state-assemble');
+      const btnExplode = document.getElementById('btn-state-explode');
+      const dotAssemble = document.getElementById('dot-state-assemble');
+      const dotExplode = document.getElementById('dot-state-explode');
+
+      function updateHorizontalScrollUI(pct) {
+        const clampedPct = Math.min(100, Math.max(0, Math.round(pct)));
+        if (scrollBarFill) {
+          scrollBarFill.style.width = `${clampedPct}%`;
+        }
+        if (scrollPctLabel) {
+          scrollPctLabel.textContent = `SCROLL PROGRESS • ${clampedPct}%`;
+        }
+
+        const isExploded = clampedPct >= 50;
+        if (btnAssemble && btnExplode && dotAssemble && dotExplode) {
+          if (!isExploded) {
+            btnAssemble.classList.add('text-brass', 'font-semibold');
+            btnAssemble.classList.remove('text-linen/55');
+            dotAssemble.className = 'w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-brass shadow-[0_0_10px_rgba(176,138,86,0.9)] transition-all';
+
+            btnExplode.classList.remove('text-brass', 'font-semibold');
+            btnExplode.classList.add('text-linen/55');
+            dotExplode.className = 'w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-linen/25 transition-all';
+          } else {
+            btnExplode.classList.add('text-brass', 'font-semibold');
+            btnExplode.classList.remove('text-linen/55');
+            dotExplode.className = 'w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-brass shadow-[0_0_10px_rgba(176,138,86,0.9)] transition-all';
+
+            btnAssemble.classList.remove('text-brass', 'font-semibold');
+            btnAssemble.classList.add('text-linen/55');
+            dotAssemble.className = 'w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-linen/25 transition-all';
+          }
+        }
+      }
+
+      function handleScroll() {
+        const track = document.getElementById('hero-scroll-track');
+        if (!track) return;
+
+        const rect = track.getBoundingClientRect();
+        const totalScrollable = track.offsetHeight - window.innerHeight;
+        const scrolled = Math.max(0, -rect.top);
+        const progress = Math.min(1, Math.max(0, scrolled / Math.max(1, totalScrollable)));
+
+        // Smoothly map scroll progress 0.0 -> 1.0 directly from Assemble (0%) to Exploded View (100%)
+        targetExplodeFactor = 0.5 * (1 - Math.cos(Math.PI * progress));
+      }
+
+      window.addEventListener('scroll', handleScroll, { passive: true });
+      handleScroll();
+
+      // Interactive Click & Touch Scrubbing on Bottom Progress Bar Track
+      const scrubTrack = document.getElementById('scroll-scrub-track');
+      let isScrubbingBar = false;
+      function scrubFromClientX(clientX) {
+        if (!scrubTrack) return;
+        const rect = scrubTrack.getBoundingClientRect();
+        const norm = Math.min(1, Math.max(0, (clientX - rect.left) / Math.max(1, rect.width)));
+        const track = document.getElementById('hero-scroll-track');
+        if (track) {
+          const scrollableDistance = track.offsetHeight - window.innerHeight;
+          window.scrollTo({ top: track.offsetTop + scrollableDistance * norm, behavior: 'auto' });
+        }
+        targetExplodeFactor = norm;
+      }
+
+      if (scrubTrack) {
+        scrubTrack.addEventListener('pointerdown', (e) => {
+          isScrubbingBar = true;
+          scrubFromClientX(e.clientX);
+        });
+        window.addEventListener('pointermove', (e) => {
+          if (!isScrubbingBar) return;
+          scrubFromClientX(e.clientX);
+        }, { passive: true });
+        window.addEventListener('pointerup', () => {
+          isScrubbingBar = false;
+        });
+      }
+
+      let pointerNormX = 0;
+      let pointerNormY = 0;
+      window.addEventListener('mousemove', (e) => {
+        pointerNormX = (e.clientX / window.innerWidth - 0.5) * 2;
+        pointerNormY = (e.clientY / window.innerHeight - 0.5) * 2;
+      }, { passive: true });
+
+      // Touch-Drag 360° Horizontal Rotation on Mobile
+      let touchStartX = 0;
+      let touchStartY = 0;
+      let touchStartNormX = 0;
+      let touchStartNormY = 0;
+
+      container.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 1) {
+          touchStartX = e.touches[0].clientX;
+          touchStartY = e.touches[0].clientY;
+          touchStartNormX = pointerNormX;
+          touchStartNormY = pointerNormY;
+        }
+      }, { passive: true });
+
+      container.addEventListener('touchmove', (e) => {
+        if (e.touches.length === 1) {
+          const dx = e.touches[0].clientX - touchStartX;
+          const dy = e.touches[0].clientY - touchStartY;
+          // Horizontal drag rotates the SO-101 arm smoothly across the full 360° arc
+          if (Math.abs(dx) > Math.abs(dy) * 0.75) {
+            const sensitivity = 2.2 / Math.max(280, window.innerWidth);
+            pointerNormX = Math.max(-1.25, Math.min(1.25, touchStartNormX + dx * sensitivity));
+            pointerNormY = Math.max(-0.8, Math.min(0.8, touchStartNormY + dy * sensitivity * 0.4));
+          }
+        }
+      }, { passive: true });
+
+      // ===================================================================
+      // RENDER, 360° MOUSE/TOUCH ROTATION & DYNAMIC RISING EXPLOSION LOOP
+      // ===================================================================
+      const clock = new THREE.Clock();
+      const maxHorizontalArcRad = Math.PI; // ±180° = Full 360° horizontal rotation left-to-right
+
+      function animate() {
+        requestAnimationFrame(animate);
+        const elapsed = clock.getElapsedTime();
+
+        explodeFactor += (targetExplodeFactor - explodeFactor) * 0.085;
+        updateHorizontalScrollUI(explodeFactor * 100);
+
+        // Smoothly ease the Rising Pose factor (`riseFactor`: 0 = Downward Resting Pose, 1 = Elevated Showcase Pose)
+        const riseFactor = Math.min(1, Math.pow(explodeFactor, 0.72));
+        const downPoseFactor = 1.0 - riseFactor;
+
+        // Articulated Joint Angles:
+        // When downPoseFactor = 1 (start of scroll), shoulder, elbow, wrist pitch, and gripper droop downward.
+        // As the user scrolls, the arm rises up while exploding!
+        j2ShoulderPivot.rotation.z = -0.24 * downPoseFactor;
+        j3ElbowPivot.rotation.z = -0.36 * downPoseFactor;
+        j4WristPivot.rotation.z = -0.76 * downPoseFactor + Math.sin(elapsed * 1.6) * 0.015;
+        j4WristPivot.rotation.x = 0.22 * explodeFactor; // Slight dramatic 3D roll during explode
+
+        // Keep the SO-101 arm centered in the assembly stage (adapts horizontally on narrow mobile portrait screens)
+        const isMobilePortrait = container.clientWidth < 640;
+        const explodedXOffset = isMobilePortrait ? -0.92 : -0.56;
+        const assembledXOffset = isMobilePortrait ? 0.22 : 0.35;
+        const baseStageY = isMobilePortrait ? -1.12 : -1.25;
+        masterGroup.position.x = explodedXOffset * explodeFactor + assembledXOffset * (1 - explodeFactor);
+        masterGroup.position.y = baseStageY - 0.14 * explodeFactor + Math.sin(elapsed * 1.4) * 0.018;
+
+        // Full 360-Degree Mouse / Touch Rotation (Left to Right: ±180 degrees around Y)
+        const targetRotY = -0.18 + pointerNormX * maxHorizontalArcRad;
+        const targetRotX = 0.08 + pointerNormY * 0.14;
+        masterGroup.rotation.y += (targetRotY - masterGroup.rotation.y) * 0.065;
+        masterGroup.rotation.x += (targetRotX - masterGroup.rotation.x) * 0.065;
+
+        // Subtle dynamic studio light movement tracking pointer for live metallic sheen
+        specularFillLight.position.x = 1.8 + pointerNormX * 3.5;
+        specularFillLight.position.y = 1.6 - pointerNormY * 2.0;
+
+        // Interpolate all registered SO-101 sub-assemblies with varied distances & rotations
+        explodableItems.forEach((item) => {
+          const s = Math.pow(explodeFactor, item.power);
+          item.obj.position.x = item.basePos.x + item.deltaPos.x * s;
+          item.obj.position.y = item.basePos.y + item.deltaPos.y * s;
+          item.obj.position.z = item.basePos.z + item.deltaPos.z * s;
+
+          if (item.rotDelta) {
+            item.obj.rotation.x = item.baseRot.x + item.rotDelta.x * s;
+            item.obj.rotation.y = item.baseRot.y + item.rotDelta.y * s;
+            item.obj.rotation.z = item.baseRot.z + item.rotDelta.z * s;
+          }
+        });
+
+        // Fade CAD dashed centerline with explosion state
+        cadAxisMat.opacity = explodeFactor * 0.65;
+
+        renderer.render(scene, camera);
+
+        // Update 18 floating micro-labels after matrices are updated
+        updateMicroLabels(explodeFactor);
+      }
+
+      animate();
+
+      // Responsive Canvas Resize Handler (Desktop 100% identical; Mobile aspect-ratio framed)
+      window.addEventListener('resize', () => {
+        if (!container) return;
+        const w = container.clientWidth;
+        const h = container.clientHeight;
+        const aspect = w / Math.max(1, h);
+        camera.aspect = aspect;
+
+        if (w >= 1024) {
+          // PC / Desktop View — 100% identical to approved desktop design
+          camera.position.z = 12.0;
+          camera.position.y = -0.22;
+        } else if (w >= 640) {
+          // Tablet View — adaptive aspect framing
+          camera.position.z = Math.max(13.6, 10.8 / Math.max(0.55, aspect));
+          camera.position.y = -0.20;
+        } else {
+          // Mobile Portrait View — scale camera Z by aspect ratio so the entire exploded SO-101 arm fits cleanly
+          camera.position.z = Math.min(24.5, Math.max(16.8, 9.6 / Math.max(0.42, aspect)));
+          camera.position.y = -0.15;
+        }
+
+        camera.updateProjectionMatrix();
+        renderer.setSize(w, h);
+      });
+      window.dispatchEvent(new Event('resize'));
+    };
+  </script>
+</body>
+</html>
